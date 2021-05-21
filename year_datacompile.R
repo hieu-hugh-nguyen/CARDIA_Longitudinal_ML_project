@@ -1,15 +1,22 @@
 rm(list=ls()) #Clear all
 cat("\014")
-exam_year = 'Y25'
+
+
+
+exam_year = 'Y20'
 #work_dir=paste0('U:/CARDIA Other/CARDIACCdata/', exam_year, '/', exam_year, '/DATA')
+
+
 #work_dir = paste0('U:/CARDIA Other/CARDIACCdata/Y10/Y10/DATA/SAS')
-#work_dir = 'U:/CARDIA Other/CARDIACCdata/Y20/Y20/CORE\DATA'
+#work_dir = paste0('U:/CARDIA Other/CARDIACCdata/Y15/Y15/DATA')
+
+work_dir = 'U:/CARDIA Other/CARDIACCdata/Y20/Y20/CORE/DATA'
 #work_dir = 'U:/CARDIA Other/CARDIACCdata/Y30/Y30data_v13'
-work_dir = 'U:/CARDIA Other/CARDIACCdata/Y25 7.26.17/DATA'
+#work_dir = 'U:/CARDIA Other/CARDIACCdata/Y25 7.26.17/DATA'
 setwd(work_dir)
 
 ##### Load libraries:##################################################################
-list.of.packages <- c('haven', 'tibble','Hmisc','labelled','DataCombine')
+list.of.packages <- c('haven', 'tibble','Hmisc','labelled','DataCombine', 'dplyr')
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
 lapply(list.of.packages, require, character.only = T)
@@ -59,6 +66,7 @@ for(j in 1:length(varName)){
   }
 }
 
+
 #Initialize the comprehensive dataset
 #And also change date format to character to avoid automatic date conversion to days since 1970:
 inx <- sapply(SOI, function(x) inherits(x, "Date") || inherits(x, "POSIXt"))
@@ -87,7 +95,7 @@ label(ComDataset[["SHORT_ID"]]) <- "FIRST 5 ID DIGITS";
 
 
 ##### Part I. Compile existing data reported in sas files: ##############################################
-for(j in 1:length(Studies)){
+for(j in 2:length(Studies)){
   SOI = get(Studies[j]);
   
   #Change date format to character to avoid date conversion to days since 1970:
@@ -96,128 +104,148 @@ for(j in 1:length(Studies)){
   
   varName=names(SOI);
   
+  # convert non-numeric column to character-type (to avoid non-compatibility error later)
+  # SOI_char <- apply(SOI, 2, function(x){if (class(x) == 'character'){as.character(x)}})
   
-  #Look for ID column: 
-  #IDcol = (sapply(varName,function(x) identical("ID",x)))
+ 
   if(!is.null(SOI$ID)==TRUE){ #If there is a ID column
+    class(SOI$ID) <- 'character'
+    class(ComDataset$ID) <- 'character'
+    ComDataset <- ComDataset %>% dplyr::full_join(SOI, by = 'ID')
     
-    #Check if there is any ID number not already in ComDataset, add it to ComDataset 
-    newID = SOI$ID[which(is.element(SOI$ID,ComDataset$ID) %in% FALSE)];
-    if(length(newID)>0){
-      for(i in 1:length(newID)){
-        ComDataset[nrow(ComDataset)+1,] <- NA; #Add an empty row
-        ComDataset[nrow(ComDataset),]['ID']=newID[i]; #Add new ID to the list
-      }
-      
-    }
-    
-    
-    overlapID = intersect(ComDataset$ID,SOI$ID); 
-    
-    if(length(overlapID) != 0){ #If there is at least one ID number overlapped with the exisiting dataset
-      #This if statement should always be TRUE 
-      
-      #Append empty columns, ncol = varName - 1, nrow = # of IDs to ComDataset 
-      #ComDataset[nrow(ComDataset)+1,] <- NA;
-      newVarName=varName[sapply(varName,function(x) identical("ID",x))==FALSE]; #Return varName vector without "ID"
-      ComDataset[,newVarName] <- NA; # Append new columns 
-      
-      #Add new values into the big dataset:    
-      indicesOI = match(overlapID,SOI$ID); #return the indices of overlapped ID 
-      subDfWoID = subset(SOI, select=-ID)[indicesOI,] #
-      
-      ##Copy Labels from SOI to subDfWoID:#########################################
-      
-      
-      VarLabel=vector(mode = "character", length = length(newVarName));
-      for(z in 1:length(newVarName)){
-        colValues=eval(parse(text=paste(Studies[j], "$", newVarName[z],sep="")));
-        if((is.null(attr(colValues,'label')) == TRUE)){
-          VarLabel[z] = "";
-        } else {
-          VarLabel[z] = attr(colValues,'label');    
-        }
-      }
-      
-      indicesInComDataset = match(overlapID,ComDataset$ID);
-      ComDataset[indicesInComDataset,newVarName]= subDfWoID; 
-      
-      #Assign labels in the big dataset:#####################################
-      
-      for(w in 1:length(VarLabel)){
-        label(ComDataset[[names(ComDataset)[ncol(ComDataset)-length(VarLabel)+w]]]) <- VarLabel[w];
-      }
-      
-    }
   }
+  
+  if(!is.null(SOI$SHORT_ID)==TRUE){ #If there is a SHORT ID column
+    class(SOI$SHORT_ID) <- 'character'
+    class(ComDataset$SHORT_ID) <- 'character'
+    ComDataset <- ComDataset %>% dplyr::full_join(SOI, by = 'SHORT_ID')
+  }
+}
+
+# remove duplicate rows:
+ComDataset<- ComDataset %>% filter(!duplicated(ID))
+  
+  # #Look for ID column: 
+  # #IDcol = (sapply(varName,function(x) identical("ID",x)))
+  # if(!is.null(SOI$ID)==TRUE){ #If there is a ID column
+  #   
+  #   #Check if there is any ID number not already in ComDataset, add it to ComDataset 
+  #   newID = SOI$ID[which(is.element(SOI$ID,ComDataset$ID) %in% FALSE)];
+  #   if(length(newID)>0){
+  #     for(i in 1:length(newID)){
+  #       ComDataset[nrow(ComDataset)+1,] <- NA; #Add an empty row
+  #       ComDataset[nrow(ComDataset),]['ID']=newID[i]; #Add new ID to the list
+  #     }
+  #     
+  #   }
+  #   
+  #   
+  #   overlapID = intersect(ComDataset$ID,SOI$ID); 
+  #   
+  #   if(length(overlapID) != 0){ #If there is at least one ID number overlapped with the exisiting dataset
+  #     #This if statement should always be TRUE 
+  #     
+  #     #Append empty columns, ncol = varName - 1, nrow = # of IDs to ComDataset 
+  #     #ComDataset[nrow(ComDataset)+1,] <- NA;
+  #     newVarName=varName[sapply(varName,function(x) identical("ID",x))==FALSE]; #Return varName vector without "ID"
+  #     ComDataset[,newVarName] <- NA; # Append new columns 
+  #     
+  #     #Add new values into the big dataset:    
+  #     indicesOI = match(overlapID,SOI$ID); #return the indices of overlapped ID 
+  #     subDfWoID = subset(SOI, select=-ID)[indicesOI,] #
+  #     
+  #     ##Copy Labels from SOI to subDfWoID:#########################################
+  #     
+  #     
+  #     VarLabel=vector(mode = "character", length = length(newVarName));
+  #     for(z in 1:length(newVarName)){
+  #       colValues=eval(parse(text=paste(Studies[j], "$", newVarName[z],sep="")));
+  #       if((is.null(attr(colValues,'label')) == TRUE)){
+  #         VarLabel[z] = "";
+  #       } else {
+  #         VarLabel[z] = attr(colValues,'label');    
+  #       }
+  #     }
+  #     
+  #     indicesInComDataset = match(overlapID,ComDataset$ID);
+  #     ComDataset[indicesInComDataset,newVarName]= subDfWoID; 
+  #     
+  #     #Assign labels in the big dataset:#####################################
+  #     
+  #     for(w in 1:length(VarLabel)){
+  #       label(ComDataset[[names(ComDataset)[ncol(ComDataset)-length(VarLabel)+w]]]) <- VarLabel[w];
+  #     }
+  #     
+  #   }
+  # }
   
   
   #For SHORT_ID Matching:##################################################################
-  else { #If there is no ID column, check for the SHORT_ID column
-    
-    if(!is.null(SOI$SHORT_ID)==TRUE){ #If there is a SHORT ID column
-      newID = SOI$SHORT_ID[which(is.element(SOI$SHORT_ID,ComDataset$SHORT_ID) %in% FALSE)];
-      #If there is new ID that hasn't already been added, add it to the list:
-      if(length(newID)>0){
-        for(i in 1:length(newID)){
-          ComDataset[nrow(ComDataset)+1,] <- NA; #Add an empty row
-          ComDataset[nrow(ComDataset),]['SHORT_ID']=newID[i]; #Add new ID to the list
-        }
-        
-      }
-      
-      
-      overlapID = intersect(ComDataset$SHORT_ID,SOI$SHORT_ID);
-      
-      if(length(overlapID) != 0){ #If there is a overlap with the exisiting dataset
-        
-        #This if statement should always be TRUE
-        
-        #Append empty columns, ncol = varName - 1, nrow = # of IDs to ComDataset
-        #ComDataset[nrow(ComDataset)+1,] <- NA;
-        newVarName=varName[sapply(varName,function(x) identical("SHORT_ID",x))==FALSE];
-        #Return varName vector without "SHORT_ID"
-        ComDataset[,newVarName] <- NA; # Append new columns
-        
-        #Add new values into the big dataset:
-        indicesOI = match(overlapID,SOI$SHORT_ID); #return the indices of overlapped ID
-        subDfWoID = subset(SOI, select=-SHORT_ID)[indicesOI,] #
-        
-        
-        
-        ##Copy Labels from SOI to subDfWoID:
-        
-        VarLabel=vector(mode = "character", length = length(newVarName));
-        for(z in 1:length(newVarName)){
-          colValues=eval(parse(text=paste(Studies[j], "$", newVarName[z],sep="")));
-          if((is.null(attr(colValues,'label')) == TRUE)){
-            VarLabel[z] = "";
-          } else {
-            VarLabel[z] = attr(colValues,'label');    
-          }
-        }
-        
-        
-        indicesInComDataset = match(overlapID,ComDataset$SHORT_ID);
-        #for(i in 1:length(indicesInComDataset)){
-        # ComDataset[indicesInComDataset[i],newVarName]= subDfWoID[i,];
-        #}
-        #OR, instead of a for loop:
-        ComDataset[indicesInComDataset,newVarName]= subDfWoID;
-        
-        
-        #Assign labels in the big dataset:
-        
-        for(w in 1:length(VarLabel)){
-          label(ComDataset[[names(ComDataset)[ncol(ComDataset)-length(VarLabel)+w]]]) <- VarLabel[w];
-        }
-        
-        
-      }
-    }
-  }
-  
-}
+  # else { #If there is no ID column, check for the SHORT_ID column
+  #   
+  #   if(!is.null(SOI$SHORT_ID)==TRUE){ #If there is a SHORT ID column
+  #     newID = SOI$SHORT_ID[which(is.element(SOI$SHORT_ID,ComDataset$SHORT_ID) %in% FALSE)];
+  #     #If there is new ID that hasn't already been added, add it to the list:
+  #     if(length(newID)>0){
+  #       for(i in 1:length(newID)){
+  #         ComDataset[nrow(ComDataset)+1,] <- NA; #Add an empty row
+  #         ComDataset[nrow(ComDataset),]['SHORT_ID']=newID[i]; #Add new ID to the list
+  #       }
+  #       
+  #     }
+  #     
+  #     
+  #     overlapID = intersect(ComDataset$SHORT_ID,SOI$SHORT_ID);
+  #     
+  #     if(length(overlapID) != 0){ #If there is a overlap with the exisiting dataset
+  #       
+  #       #This if statement should always be TRUE
+  #       
+  #       #Append empty columns, ncol = varName - 1, nrow = # of IDs to ComDataset
+  #       #ComDataset[nrow(ComDataset)+1,] <- NA;
+  #       newVarName=varName[sapply(varName,function(x) identical("SHORT_ID",x))==FALSE];
+  #       #Return varName vector without "SHORT_ID"
+  #       ComDataset[,newVarName] <- NA; # Append new columns
+  #       
+  #       #Add new values into the big dataset:
+  #       indicesOI = match(overlapID,SOI$SHORT_ID); #return the indices of overlapped ID
+  #       subDfWoID = subset(SOI, select=-SHORT_ID)[indicesOI,] #
+  #       
+  #       
+  #       
+  #       ##Copy Labels from SOI to subDfWoID:
+  #       
+  #       VarLabel=vector(mode = "character", length = length(newVarName));
+  #       for(z in 1:length(newVarName)){
+  #         colValues=eval(parse(text=paste(Studies[j], "$", newVarName[z],sep="")));
+  #         if((is.null(attr(colValues,'label')) == TRUE)){
+  #           VarLabel[z] = "";
+  #         } else {
+  #           VarLabel[z] = attr(colValues,'label');    
+  #         }
+  #       }
+  #       
+  #       
+  #       indicesInComDataset = match(overlapID,ComDataset$SHORT_ID);
+  #       #for(i in 1:length(indicesInComDataset)){
+  #       # ComDataset[indicesInComDataset[i],newVarName]= subDfWoID[i,];
+  #       #}
+  #       #OR, instead of a for loop:
+  #       ComDataset[indicesInComDataset,newVarName]= subDfWoID;
+  #       
+  #       
+  #       #Assign labels in the big dataset:
+  #       
+  #       for(w in 1:length(VarLabel)){
+  #         label(ComDataset[[names(ComDataset)[ncol(ComDataset)-length(VarLabel)+w]]]) <- VarLabel[w];
+  #       }
+  #       
+  #       
+  #     }
+  #   }
+#   }
+#   
+# }
 
 
 
@@ -251,9 +279,7 @@ for(k in 1:length(AllVarLabel)){
 rowofAllVarLabelDf = as.data.frame(t(rowofAllVarLabel));
 names(rowofAllVarLabelDf) = names(ComDataset);
 
-csvComDataset <- DataCombine::InsertRow(ComDataset,rowofAllVarLabel,RowNum=1); 
-
-write.csv(csvComDataset, file = paste0(saving.dir,"/", exam_year, "_unimputed_featurespace.csv"),row.names=FALSE)
+write.csv(ComDataset, file = paste0(saving.dir,"/", exam_year, "_unimputed_featurespace.csv"),row.names=FALSE)
 
 
 # Create a Variable Dictionary .CSV file##############################################

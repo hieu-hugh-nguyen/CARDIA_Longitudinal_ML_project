@@ -54,4 +54,4 @@ longi_data <- longi_data %>% mutate(varname_longi = ifelse(grepl('_',substr(long
 
 
 saving.dir = file.path(work_dir,'csv_files')
-write.csv(longi_data, file = paste0(saving.dir,'/longi_data_avalability_dictionary.csv'), row.names = F)
+write.csv(longi_data, file = paste0(saving.dir,'/longi_data_avalability_dictionary2.csv'), row.names = F)
