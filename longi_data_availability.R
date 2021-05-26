@@ -1,5 +1,5 @@
 cat("\014")
-
+rm(list=ls()) #Clear all
 # set working directory: 
 work_dir = 'U:/Hieu/CARDIA_longi_project'
 setwd(work_dir)
@@ -41,7 +41,7 @@ for (i in 1:length(exam_years)){
     mutate(exam_year = exam_years[i]) %>%
     dplyr::select(exam_year, varname_longi, non_missing_per, Variable.Name, everything())
   
-  longi_data <- rbind(longi_data, var_dict[,1:7])                          
+  longi_data <- rbind(longi_data, var_dict[,1:ncol(var_dict)])                          
   assign( paste0('var_dict_Y',as.character(exam_years[i])),var_dict)
                             
 }
@@ -54,4 +54,67 @@ longi_data <- longi_data %>% mutate(varname_longi = ifelse(grepl('_',substr(long
 
 
 saving.dir = file.path(work_dir,'csv_files')
-write.csv(longi_data, file = paste0(saving.dir,'/longi_data_avalability_dictionary2.csv'), row.names = F)
+write.csv(longi_data, file = paste0(saving.dir,'/longi_data_avalability_dictionary.csv'), row.names = F)
+
+
+# remove questionnaire variables, retain lab-based and reading center variables:
+
+longi_data %>% filter(exam_year == '0') %>% dplyr::select('Datadoc') %>% unique()
+View(longi_data %>% filter(exam_year == '0') %>% arrange(Datadoc)) 
+lab_y0 <- c('a5chem', 'a4cot', 'a4ins', 'a4lip','a4hcy','a4hcy'
+            ,'b2lip','b2hemo','b2leptin'
+            ,'c1echo','c1fibr','c1lip','c1lpa','c1apob','c1cartda','c1gmp','c1hemo'
+            ,'d1apoe','d1crp','d1glu','d1ins','d1lip','d1dexa','d1fibr','d1hcy','d1hemo','d1leptin','d1proins'
+            ,'e1chem','e1glu','e1ins','e1lip','e1micro','e1apob','e1catech','e1ebct','e1echy05','e1echy10','e1leptin','e1renald'
+            ,'f1chem','f1ebctadj','f1ins','f1isop','f1lip','f1micro','f2crp','f2ebct','f2glu','f2catech','f2hcy','f2hrv','f2ige','f2igfil','f2ucort','f3scort'
+            ,'g3adipoq','g3cartd','g3chem','g3crp','g3ebct','g3fibr','g3glu','g3il6','g3ins','g3lip','g3micro','g3pcsk9','g3snps','g3cfssnp2','g3cfssnp3','g3cfssnp4','g3cfssnp5','g3cfssnp','g4actigraph','g4dxa'
+            ,'h2chem','h2crp','h2ebct_abdomen','h2echo','h2glu','h2ins','h2lip','h2micro','2ebct_chest','h3hba1c','h4mri'
+            ,'i3hba1c')
+
+
+
+bp_datadoc <- c('a4f02','b2f02','c1f02','d1f02','e1f02','f1f02','e1f02','g3f02','h3f02v2','i1f02')
+anthro_datadoc <-c ('a4f20') #anthropometry
+
+
+y0_lab_data <- longi_data %>% filter(Datadoc %in% dataset_considered_y0)
+
+
+# plus traditional risk factors, bp, and anthropometries
+ #bp
+
+# Others: # socioeconomic status: a4f01 
+# a4f08 a4f09 # medical history
+
+
+# ascvd risk factors:
+
+#demographic 
+a4ref %>% select(RACE,EXAMAGE)
+
+#a4f01 %>% select(A01SMNOW)
+#a4f08 %>% select(A08DIAB)
+#a4f08 %>% select(A08BPMED)
+
+
+
+
+dataset$sex = ifelse(dataset$SEX == 1, "Male", "Female")
+dataset$race = ifelse(dataset$RACE == 5, "White", "Black")
+dataset$age = dataset$CALCULATED.AGE.AT.EXAM.3
+
+dataset$currentsmoker = ifelse(dataset$A01SMNOW == 2, 1, 0)
+dataset$hbp.medication = ifelse(dataset$CURRENTLY.TAKING.HBP.MEDICATION >= 1.5, 1, 0)
+dataset$diabetes.status = ifelse(dataset$DIABETES >= 1.5, 1, 0)
+
+
+dataset$sbp = dataset$SYSTOLIC.BLOOD.PRESSURE
+
+bp_variables <- c('A02SBP B02AVGSY C02AVGSY D02AVGSY E02AVGSY F02AVGSY G02SAVG H02SAVG I02SAVG')
+
+
+
+dataset$total.choles = dataset$TOTAL.CHOLESTEROL..MG.DL.
+dataset$hdl.choles = dataset$TOTAL.HDL.CHOLESTEROL..MG.DL.
+
+

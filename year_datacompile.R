@@ -2,18 +2,48 @@ rm(list=ls()) #Clear all
 cat("\014")
 
 
+# Input Exam Year:
+#exam_year = 'Y0'
 
-exam_year = 'Y20'
-#work_dir=paste0('U:/CARDIA Other/CARDIACCdata/', exam_year, '/', exam_year, '/DATA')
+ exam_year = 'Y10'
 
 
-#work_dir = paste0('U:/CARDIA Other/CARDIACCdata/Y10/Y10/DATA/SAS')
-#work_dir = paste0('U:/CARDIA Other/CARDIACCdata/Y15/Y15/DATA')
 
-work_dir = 'U:/CARDIA Other/CARDIACCdata/Y20/Y20/CORE/DATA'
-#work_dir = 'U:/CARDIA Other/CARDIACCdata/Y30/Y30data_v13'
-#work_dir = 'U:/CARDIA Other/CARDIACCdata/Y25 7.26.17/DATA'
+ 
+
+
+if (exam_year == 'Y0'){
+  work_dir <- 'U:/CARDIA Other/CARDIACCdata/Y0/Y0/DATA'
+}
+if (exam_year == 'Y2'){
+  work_dir <- 'U:/CARDIA Other/CARDIACCdata/Y2/Y2/DATA'
+}
+if (exam_year == 'Y5'){
+  work_dir <- 'U:/CARDIA Other/CARDIACCdata/Y5/DATA'
+}
+if (exam_year == 'Y7'){
+  work_dir <- 'U:/CARDIA Other/CARDIACCdata/Y7/Y7/DATA'
+}
+if (exam_year == 'Y10'){
+  work_dir <- 'U:/CARDIA Other/CARDIACCdata/Y10/Y10/DATA/SAS'
+}
+if (exam_year == 'Y15'){
+  work_dir <- 'U:/CARDIA Other/CARDIACCdata/Y15/Y15/DATA'
+}
+if (exam_year == 'Y20'){
+  work_dir <- 'U:/CARDIA Other/CARDIACCdata/Y20/Y20/CORE/DATA'
+}
+if (exam_year == 'Y25'){
+  work_dir <- 'U:/CARDIA Other/CARDIACCdata/Y25 7.26.17/DATA'
+}
+if (exam_year == 'Y30'){
+  work_dir <- 'U:/CARDIA Other/CARDIACCdata/Y30/Y30data_v13'
+}
+
 setwd(work_dir)
+
+
+
 
 ##### Load libraries:##################################################################
 list.of.packages <- c('haven', 'tibble','Hmisc','labelled','DataCombine', 'dplyr')
@@ -22,35 +52,35 @@ if(length(new.packages)) install.packages(new.packages)
 lapply(list.of.packages, require, character.only = T)
 
 
+
 ##### Initialization:##################################################################
 
 
 #Extract file names from the SAS folder:
-filenames=list.files(pattern = "\\.sas7bdat$");
+filenames=list.files(path = work_dir, pattern = "\\.sas7bdat$");
 #Extract file names without the extension:
 filenamesWoExtension=tools::file_path_sans_ext(filenames);
 #Create objects with the same name and assign the data in each file to its corresponding name
 for(i in 1:length(filenames)){
-  assign(filenamesWoExtension[i],read_sas(filenames[i]));
+  assign(filenamesWoExtension[i],haven::read_sas(filenames[i]));
 }
 
+
+# Remove unneeded studies:
+# for year 20, remove g3f06raw, g4f06bh (diet intake questionnaines, too many rows (690k+))
+rm(a5f06bh, d2f06bh, g4f06bh, g3f06raw,fghctr01_dec07_2012)
+
 # Remember to check all loaded dataframes: 
-sapply(sapply(ls(), get), glimpse)
-# make sure ID column is in each df as the first column
-
-# this one df has its ID and var column swiched
-# c1apob = c1apob[c('ID','CL9APOB')]
-# rm(c2f09mbc)
-# c1hemo = c1hemo[c( "ID", "CLEFACT7", "CLEFACT8", "CLEFIBR",  "CLEVWANT", "CLEVWACT", "CLEBTYPE","CLELEWIS")]
-# c1lip = c1lip[c( "ID" , "CL1CHOL" , "CL1VLDL",  "CL1HDL"  , "CL1LDL"  , "CL1NTRIG" , "CENTER")]
-# c1gmp = c1gmp[c("ID" , "C1GMP"  ,  "COLLDAY",  "CENTER",     "C39LENG1", "C39LENG2", "C39LENG3", "C39VOL1",  "C39VOL2"  ,"C39VOL3",  "ADJ_GMP")] 
-# c1cartda = c1cartda[c("SHORT_ID", names(c1cartda)[-which(names(c1cartda) == "SHORT_ID")])]
-# c1echo = c1echo[c('ID', names(c1echo)[-which(names(c1echo) == "ID")])]
-
+# sapply(sapply(ls(), get), glimpse)
+ 
 
 #Get all studies names (data frames):
 Studies <- sapply(sapply(ls(), get), is.data.frame);
 Studies = names(Studies)[(Studies==TRUE)]
+
+
+
+
 
 
 #Copy Labels:
@@ -76,7 +106,7 @@ ComDataset <- SOI;
 #Assign labels in the big dataset:
 
 for(j in 1:length(objectLabel)){
-  label(ComDataset[[names(ComDataset)[j]]]) <- objectLabel[j];
+  Hmisc::label(ComDataset[[names(ComDataset)[j]]]) <- objectLabel[j];
 }
 
 
@@ -85,6 +115,10 @@ SHORT_ID = substr(ComDataset$ID,1,5);
 ComDataset = add_column(ComDataset,SHORT_ID,.after="ID");
 names(ComDataset$SHORT_ID)<-"SHORT_ID"
 label(ComDataset[["SHORT_ID"]]) <- "FIRST 5 ID DIGITS";
+
+
+# keep track of which data collection form that each variable comes from:
+datadoc <- rep(Studies[1],length = ncol(SOI))
 
 
 
@@ -98,6 +132,7 @@ label(ComDataset[["SHORT_ID"]]) <- "FIRST 5 ID DIGITS";
 for(j in 2:length(Studies)){
   SOI = get(Studies[j]);
   
+  
   #Change date format to character to avoid date conversion to days since 1970:
   inx <- sapply(SOI, function(x) inherits(x, "Date") || inherits(x, "POSIXt"))
   SOI[inx] <- lapply(SOI[inx], as.character)
@@ -107,147 +142,30 @@ for(j in 2:length(Studies)){
   # convert non-numeric column to character-type (to avoid non-compatibility error later)
   # SOI_char <- apply(SOI, 2, function(x){if (class(x) == 'character'){as.character(x)}})
   
- 
+  non_overlaping_cols <- names(SOI)[!(names(SOI) %in% names(ComDataset))]
+  ncol_old_ComDataset <- ncol(ComDataset)
   if(!is.null(SOI$ID)==TRUE){ #If there is a ID column
     class(SOI$ID) <- 'character'
     class(ComDataset$ID) <- 'character'
-    ComDataset <- ComDataset %>% dplyr::full_join(SOI, by = 'ID')
     
+    ComDataset <- ComDataset %>% dplyr::full_join(SOI %>% dplyr::select(c('ID',non_overlaping_cols)), by = 'ID')
   }
   
-  if(!is.null(SOI$SHORT_ID)==TRUE){ #If there is a SHORT ID column
-    class(SOI$SHORT_ID) <- 'character'
-    class(ComDataset$SHORT_ID) <- 'character'
-    ComDataset <- ComDataset %>% dplyr::full_join(SOI, by = 'SHORT_ID')
+  else{
+    if(!is.null(SOI$SHORT_ID)==TRUE){ #If there is a SHORT ID column
+      class(SOI$SHORT_ID) <- 'character'
+      class(ComDataset$SHORT_ID) <- 'character'
+      ComDataset <- ComDataset %>% dplyr::full_join(SOI %>% dplyr::select(c('SHORT_ID',non_overlaping_cols)), by = 'SHORT_ID')
+    }
   }
+  ComDataset<- ComDataset %>% filter(!duplicated(ID))
+  datadoc <- c(datadoc, rep(Studies[j], length = ncol(ComDataset)-ncol_old_ComDataset)) #minus 1 because excluding the ID column
+  
 }
 
-# remove duplicate rows:
-ComDataset<- ComDataset %>% filter(!duplicated(ID))
-  
-  # #Look for ID column: 
-  # #IDcol = (sapply(varName,function(x) identical("ID",x)))
-  # if(!is.null(SOI$ID)==TRUE){ #If there is a ID column
-  #   
-  #   #Check if there is any ID number not already in ComDataset, add it to ComDataset 
-  #   newID = SOI$ID[which(is.element(SOI$ID,ComDataset$ID) %in% FALSE)];
-  #   if(length(newID)>0){
-  #     for(i in 1:length(newID)){
-  #       ComDataset[nrow(ComDataset)+1,] <- NA; #Add an empty row
-  #       ComDataset[nrow(ComDataset),]['ID']=newID[i]; #Add new ID to the list
-  #     }
-  #     
-  #   }
-  #   
-  #   
-  #   overlapID = intersect(ComDataset$ID,SOI$ID); 
-  #   
-  #   if(length(overlapID) != 0){ #If there is at least one ID number overlapped with the exisiting dataset
-  #     #This if statement should always be TRUE 
-  #     
-  #     #Append empty columns, ncol = varName - 1, nrow = # of IDs to ComDataset 
-  #     #ComDataset[nrow(ComDataset)+1,] <- NA;
-  #     newVarName=varName[sapply(varName,function(x) identical("ID",x))==FALSE]; #Return varName vector without "ID"
-  #     ComDataset[,newVarName] <- NA; # Append new columns 
-  #     
-  #     #Add new values into the big dataset:    
-  #     indicesOI = match(overlapID,SOI$ID); #return the indices of overlapped ID 
-  #     subDfWoID = subset(SOI, select=-ID)[indicesOI,] #
-  #     
-  #     ##Copy Labels from SOI to subDfWoID:#########################################
-  #     
-  #     
-  #     VarLabel=vector(mode = "character", length = length(newVarName));
-  #     for(z in 1:length(newVarName)){
-  #       colValues=eval(parse(text=paste(Studies[j], "$", newVarName[z],sep="")));
-  #       if((is.null(attr(colValues,'label')) == TRUE)){
-  #         VarLabel[z] = "";
-  #       } else {
-  #         VarLabel[z] = attr(colValues,'label');    
-  #       }
-  #     }
-  #     
-  #     indicesInComDataset = match(overlapID,ComDataset$ID);
-  #     ComDataset[indicesInComDataset,newVarName]= subDfWoID; 
-  #     
-  #     #Assign labels in the big dataset:#####################################
-  #     
-  #     for(w in 1:length(VarLabel)){
-  #       label(ComDataset[[names(ComDataset)[ncol(ComDataset)-length(VarLabel)+w]]]) <- VarLabel[w];
-  #     }
-  #     
-  #   }
-  # }
-  
-  
-  #For SHORT_ID Matching:##################################################################
-  # else { #If there is no ID column, check for the SHORT_ID column
-  #   
-  #   if(!is.null(SOI$SHORT_ID)==TRUE){ #If there is a SHORT ID column
-  #     newID = SOI$SHORT_ID[which(is.element(SOI$SHORT_ID,ComDataset$SHORT_ID) %in% FALSE)];
-  #     #If there is new ID that hasn't already been added, add it to the list:
-  #     if(length(newID)>0){
-  #       for(i in 1:length(newID)){
-  #         ComDataset[nrow(ComDataset)+1,] <- NA; #Add an empty row
-  #         ComDataset[nrow(ComDataset),]['SHORT_ID']=newID[i]; #Add new ID to the list
-  #       }
-  #       
-  #     }
-  #     
-  #     
-  #     overlapID = intersect(ComDataset$SHORT_ID,SOI$SHORT_ID);
-  #     
-  #     if(length(overlapID) != 0){ #If there is a overlap with the exisiting dataset
-  #       
-  #       #This if statement should always be TRUE
-  #       
-  #       #Append empty columns, ncol = varName - 1, nrow = # of IDs to ComDataset
-  #       #ComDataset[nrow(ComDataset)+1,] <- NA;
-  #       newVarName=varName[sapply(varName,function(x) identical("SHORT_ID",x))==FALSE];
-  #       #Return varName vector without "SHORT_ID"
-  #       ComDataset[,newVarName] <- NA; # Append new columns
-  #       
-  #       #Add new values into the big dataset:
-  #       indicesOI = match(overlapID,SOI$SHORT_ID); #return the indices of overlapped ID
-  #       subDfWoID = subset(SOI, select=-SHORT_ID)[indicesOI,] #
-  #       
-  #       
-  #       
-  #       ##Copy Labels from SOI to subDfWoID:
-  #       
-  #       VarLabel=vector(mode = "character", length = length(newVarName));
-  #       for(z in 1:length(newVarName)){
-  #         colValues=eval(parse(text=paste(Studies[j], "$", newVarName[z],sep="")));
-  #         if((is.null(attr(colValues,'label')) == TRUE)){
-  #           VarLabel[z] = "";
-  #         } else {
-  #           VarLabel[z] = attr(colValues,'label');    
-  #         }
-  #       }
-  #       
-  #       
-  #       indicesInComDataset = match(overlapID,ComDataset$SHORT_ID);
-  #       #for(i in 1:length(indicesInComDataset)){
-  #       # ComDataset[indicesInComDataset[i],newVarName]= subDfWoID[i,];
-  #       #}
-  #       #OR, instead of a for loop:
-  #       ComDataset[indicesInComDataset,newVarName]= subDfWoID;
-  #       
-  #       
-  #       #Assign labels in the big dataset:
-  #       
-  #       for(w in 1:length(VarLabel)){
-  #         label(ComDataset[[names(ComDataset)[ncol(ComDataset)-length(VarLabel)+w]]]) <- VarLabel[w];
-  #       }
-  #       
-  #       
-  #     }
-  #   }
-#   }
-#   
-# }
 
 
+ 
 
 #Sort the final dataset based on full ID in ascending order: 
 ComDataset = ComDataset[order(ComDataset$ID),]; 
@@ -262,7 +180,6 @@ ComDataset = ComDataset[order(ComDataset$ID),];
 # Write the big dataset to a .CSV file:##########################################
 #Include a row of variable labels, for easier view in Excel                     #
 
-saving.dir = paste0('U:/Hieu/CARDIA_longi_project/csv_files/', exam_year)
 
 #Create a row of variable labels onto the big dataset:
 AllVarLabel = sapply(ComDataset, function(x) attr(x, 'label'))
@@ -279,6 +196,7 @@ for(k in 1:length(AllVarLabel)){
 rowofAllVarLabelDf = as.data.frame(t(rowofAllVarLabel));
 names(rowofAllVarLabelDf) = names(ComDataset);
 
+saving.dir = paste0('U:/Hieu/CARDIA_longi_project/csv_files/', exam_year)
 write.csv(ComDataset, file = paste0(saving.dir,"/", exam_year, "_unimputed_featurespace.csv"),row.names=FALSE)
 
 
@@ -301,15 +219,30 @@ for (y in 1:length(names(ComDataset))){
     CategoricalOrContinuous[y] = 1; #else, variable is continuous  
   }
   
-}
+} 
+
+
+datadoc <- c("",datadoc) # add empty doc for the ID variable
 
 
 
-
-#Create Df of 4 columns: 
+#Create Df of var dict: 
 AllVarDf = data.frame(names(ComDataset), rowofAllVarLabel, numParticipants, CategoricalOrContinuous);
 names(AllVarDf)= c("Variable Name","Variable Label","Number of Participants (total non-NA values)","Categorical=0, Continuous =1, Categorical in this context means 'there are fewer than 6 unique values', while Continuous means greater than 6 ");
 
+#move ID row to the top:
+AllVarDf = bind_rows(AllVarDf %>% filter(`Variable Name` == 'ID'), AllVarDf %>% filter(`Variable Name` != 'ID'))  
+
+AllVarDf$Datadoc = datadoc
+
 #Write to a csv file: 
-#saving.dir = "U:/Hieu/CARDIA_project/csv_files"
+saving.dir = paste0('U:/Hieu/CARDIA_longi_project/csv_files/', exam_year)
 write.csv(AllVarDf, file = paste0(saving.dir,"/", exam_year, "_all_vars_dictionary.csv"),row.names=FALSE)
+
+
+ 
+
+
+
+ 
+ 
