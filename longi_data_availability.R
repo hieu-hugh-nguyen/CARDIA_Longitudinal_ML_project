@@ -1,3 +1,7 @@
+# Take input from variable dictionary from each year, combine them all together and arrange to make a dictionary of longitudinal variables, 
+# one for all variables, one for all non-questionnaire variables, and one for ascvd risk factors
+
+
 cat("\014")
 rm(list=ls()) #Clear all
 # set working directory: 
@@ -54,44 +58,87 @@ longi_data <- longi_data %>% mutate(varname_longi = ifelse(grepl('_',substr(long
 
 
 saving.dir = file.path(work_dir,'csv_files')
-write.csv(longi_data, file = paste0(saving.dir,'/longi_data_avalability_dictionary.csv'), row.names = F)
+# write.csv(longi_data, file = paste0(saving.dir,'/longi_data_avalability_dictionary.csv'), row.names = F)
 
 
 # remove questionnaire variables, retain lab-based and reading center variables:
 
-longi_data %>% filter(exam_year == '0') %>% dplyr::select('Datadoc') %>% unique()
-View(longi_data %>% filter(exam_year == '0') %>% arrange(Datadoc)) 
-lab_y0 <- c('a5chem', 'a4cot', 'a4ins', 'a4lip','a4hcy','a4hcy'
+lab_datadoc <- c('a5chem', 'a4cot', 'a4ins', 'a4lip','a4hcy','a4hcy'
             ,'b2lip','b2hemo','b2leptin'
-            ,'c1echo','c1fibr','c1lip','c1lpa','c1apob','c1cartda','c1gmp','c1hemo'
-            ,'d1apoe','d1crp','d1glu','d1ins','d1lip','d1dexa','d1fibr','d1hcy','d1hemo','d1leptin','d1proins'
-            ,'e1chem','e1glu','e1ins','e1lip','e1micro','e1apob','e1catech','e1ebct','e1echy05','e1echy10','e1leptin','e1renald'
-            ,'f1chem','f1ebctadj','f1ins','f1isop','f1lip','f1micro','f2crp','f2ebct','f2glu','f2catech','f2hcy','f2hrv','f2ige','f2igfil','f2ucort','f3scort'
-            ,'g3adipoq','g3cartd','g3chem','g3crp','g3ebct','g3fibr','g3glu','g3il6','g3ins','g3lip','g3micro','g3pcsk9','g3snps','g3cfssnp2','g3cfssnp3','g3cfssnp4','g3cfssnp5','g3cfssnp','g4actigraph','g4dxa'
-            ,'h2chem','h2crp','h2ebct_abdomen','h2echo','h2glu','h2ins','h2lip','h2micro','2ebct_chest','h3hba1c','h4mri'
-            ,'i3hba1c')
-
+            ,'c1fibr','c1lip','c1lpa','c1apob','c1gmp','c1hemo'
+            ,'d1apoe','d1crp','d3glu','d1ins','d1lip','d1fibr','d1hcy','d1hemo','d1leptin','d1proins'
+            ,'e2chem','e3glu','e1ins','e1lip','e1micro','e1apob','e1catech','e1leptin','e1renald'
+            ,'f2chem','f1ins','f1isop','f1lip','f1micro','f2crp','f2glu','f2catech','f2hcy','f2hrv','f2ige','f2igfil','f2ucort','f3scort'
+            ,'g3lip','g4chem','g3crp','g3fibr','g5glu','g3il6','g3ins','g3micro' 
+            ,'h3chem','h3crp','h3glu','h4ins','h3lip','h3micro','h3hba1c'
+            ,'i2chem','i3glu','i3ins','i2lip','i2micro','i3hba1c')
+img_datadoc <- c('c1echo','c1cartda'
+                 ,'d1dexa'
+                 ,'e1ebct','e1echy05','e1echy10'
+                 ,'f1ebctadj','f2ebct'
+                 ,'g3cartd','g3ebct'
+                 ,'h4ebct','h10echo', 'h7echo','h4mri'
+                 ,'i5echo','i4mri'
+                 )
+# dexa = DUAL ENERGY X-RAY ABSORPTIOMETRY
+# cartda = carotid ultrasound
 
 
 bp_datadoc <- c('a4f02','b2f02','c1f02','d1f02','e1f02','f1f02','e1f02','g3f02','h3f02v2','i1f02')
-anthro_datadoc <-c ('a4f20') #anthropometry
-
-
-y0_lab_data <- longi_data %>% filter(Datadoc %in% dataset_considered_y0)
-
-
-# plus traditional risk factors, bp, and anthropometries
- #bp
+anthro_datadoc <-c ('a4f20','b2f20','c1f20','d1f20a','e1f20','f2f20','g3f20','h3f20') #anthropometry
+medical_his_datadoc <- c('a4f08','a4f09med','b2f08','b2f09mhb','c1f08','d1f08a','e1f08','f1f08','g3f08','h3f08','i1f08')
+smoking_datadoc <- c('a4f09tob','b2f09tob','c1f09tob','d1f9toba','e1f09tob','f1f09tob','g3f09tob','h3f09tob','i1f09tob')
+race_age_edu_datadoc <- c('a4f01') # c('b3ref')
+sex_verified_datadoc <- c('a4f01') # c('b3ref') # the datadoc from Y0 (a4f09gen) only contains 4008/5115 non-missing values, hence use datadoc from Y2
 
 # Others: # socioeconomic status: a4f01 
 # a4f08 a4f09 # medical history
 
 
-# ascvd risk factors:
+longi_useful_data <- longi_data %>% filter(Datadoc %in% c(race_age_edu_datadoc, sex_verified_datadoc
+                                                          ,lab_datadoc, img_datadoc, bp_datadoc
+                                                          ,anthro_datadoc, medical_his_datadoc
+                                                          ,smoking_datadoc)) %>%
+  mutate(var_group = case_when(Datadoc %in% lab_datadoc ~ "lab"
+                               ,Datadoc %in% img_datadoc ~ "imaging"
+                               ,Datadoc %in% bp_datadoc ~ "blood_pressure"
+                               ,Datadoc %in% anthro_datadoc ~ "anthropometry"
+                               ,Datadoc %in% medical_his_datadoc ~ "medical_history"
+                               ,Datadoc %in% smoking_datadoc ~ "smoking"
+                               ,Datadoc %in% race_age_edu_datadoc ~ "demographics"
+                               ,Datadoc %in% sex_verified_datadoc ~ "demographics"
+                               )) %>%
+  arrange(var_group,varname_longi,exam_year)
 
+
+saving.dir = file.path(work_dir,'csv_files')
+write.csv(longi_useful_data, file = paste0(saving.dir,'/longi_data_avalability_dictionary_no_questionnaire2.csv'), row.names = F)
+
+
+
+
+# filter ascvd risk factors only:
+bp_variables <- c('A02SBP','B02AVGSY','C02AVGSY','D02AVGSY','E02AVGSY','F02AVGSY','G02SAVG','H02SAVG','I02SAVG')
+
+longi_ascvd_var_dict <- longi_useful_data %>% filter(varname_longi %in% c('RACE1','SEX','AGE1'
+                                                                          ,'DIAB','SMKNW'
+                                                                          ,'CHOL','HDL')) %>% 
+                                              rbind(longi_useful_data %>% filter(Variable.Name %in% bp_variables)
+                                                    %>% mutate(varname_longi = "SBP")) %>%
+                                              rbind(longi_useful_data %>% filter(varname_longi %in% c('MDNOW','HBNOW'))
+                                                    %>% mutate(varname_longi = "HBM")) %>%
+                                              arrange(varname_longi,exam_year)
+
+
+saving.dir = file.path(work_dir,'csv_files')
+write.csv(longi_ascvd_var_dict, file = paste0(saving.dir,'/longi_data_avalability_dictionary_ascvd_risk_factors2.csv'), row.names = F)
+
+
+#A09MDNOW
 #demographic 
-a4ref %>% select(RACE,EXAMAGE)
+# b3ref %>% select(RACE,EXAMAGE)
 
+# 
 #a4f01 %>% select(A01SMNOW)
 #a4f08 %>% select(A08DIAB)
 #a4f08 %>% select(A08BPMED)
@@ -99,22 +146,13 @@ a4ref %>% select(RACE,EXAMAGE)
 
 
 
-dataset$sex = ifelse(dataset$SEX == 1, "Male", "Female")
-dataset$race = ifelse(dataset$RACE == 5, "White", "Black")
-dataset$age = dataset$CALCULATED.AGE.AT.EXAM.3
-
-dataset$currentsmoker = ifelse(dataset$A01SMNOW == 2, 1, 0)
-dataset$hbp.medication = ifelse(dataset$CURRENTLY.TAKING.HBP.MEDICATION >= 1.5, 1, 0)
-dataset$diabetes.status = ifelse(dataset$DIABETES >= 1.5, 1, 0)
-
-
-dataset$sbp = dataset$SYSTOLIC.BLOOD.PRESSURE
-
-bp_variables <- c('A02SBP B02AVGSY C02AVGSY D02AVGSY E02AVGSY F02AVGSY G02SAVG H02SAVG I02SAVG')
-
-
-
-dataset$total.choles = dataset$TOTAL.CHOLESTEROL..MG.DL.
-dataset$hdl.choles = dataset$TOTAL.HDL.CHOLESTEROL..MG.DL.
+# dataset$sex = ifelse(dataset$SEX == 1, "Male", "Female")
+# dataset$race = ifelse(dataset$RACE == 5, "White", "Black")
+# dataset$age = dataset$CALCULATED.AGE.AT.EXAM.3
+# 
+# dataset$currentsmoker = ifelse(dataset$A01SMNOW == 2, 1, 0)
+# dataset$hbp.medication = ifelse(dataset$CURRENTLY.TAKING.HBP.MEDICATION >= 1.5, 1, 0)
+# dataset$diabetes.status = ifelse(dataset$DIABETES >= 1.5, 1, 0)
+# 
 
 

@@ -1,6 +1,6 @@
 # Bubble plot of non-missing longitudinal data with ggplot2 
-#
-#
+# Input: longitudinal variable dictionary
+# Output: bubble plot and a dataframe mimics the bubble plot format to easier track missing data availability over the years
 
 
 rm(list=ls()) #Clear all

@@ -5,7 +5,7 @@ cat("\014")
 # Input Exam Year:
 #exam_year = 'Y0'
 
- exam_year = 'Y10'
+ exam_year = 'Y5'
 
 
 
@@ -52,6 +52,8 @@ if(length(new.packages)) install.packages(new.packages)
 lapply(list.of.packages, require, character.only = T)
 
 
+source_dir <- 'U:/Hieu/CARDIA_project/CARDIA_project'
+source(paste0(source_dir,'/Git/code/snippet/remove_hms_time_type.R'))
 
 ##### Initialization:##################################################################
 
@@ -68,7 +70,7 @@ for(i in 1:length(filenames)){
 
 # Remove unneeded studies:
 # for year 20, remove g3f06raw, g4f06bh (diet intake questionnaines, too many rows (690k+))
-rm(a5f06bh, d2f06bh, g4f06bh, g3f06raw,fghctr01_dec07_2012)
+rm(a5f06bh, c1f42, c1f42b, d2f06bh, g4f06bh, g3f06raw,fghctr01_dec07_2012)
 
 # Remember to check all loaded dataframes: 
 # sapply(sapply(ls(), get), glimpse)
@@ -196,8 +198,25 @@ for(k in 1:length(AllVarLabel)){
 rowofAllVarLabelDf = as.data.frame(t(rowofAllVarLabel));
 names(rowofAllVarLabelDf) = names(ComDataset);
 
+# since <time> variables (<hms>, <difftime> class) cannot be written to csv, delete these variables: 
+ComDataset2 <- remove_hms_time_type(ComDataset)
+
+# remove NA values in SHORT_ID (avoid mistakenly overcounting number of participants):
+ComDataset3 <- ComDataset2[!is.na(ComDataset2$SHORT_ID),]
+
 saving.dir = paste0('U:/Hieu/CARDIA_longi_project/csv_files/', exam_year)
-write.csv(ComDataset, file = paste0(saving.dir,"/", exam_year, "_unimputed_featurespace.csv"),row.names=FALSE)
+write.csv(ComDataset3, file = paste0(saving.dir,"/", exam_year, "_unimputed_featurespace.csv"),row.names=FALSE)
+
+
+
+
+
+
+
+
+
+
+
 
 
 # Create a Variable Dictionary .CSV file##############################################
