@@ -85,7 +85,7 @@ testingid_all <- read.csv(paste0(work_dir,'/csv_files/all_testing_set_ID.csv'))
 
 seed <- 4495
 set.seed(seed)
-nfolds <- 1
+nfolds <- 3
 endpt_yr <- 10
 
 endpt <- 18; # after Year 15
@@ -111,7 +111,7 @@ for (fold in 1:nfolds){
   if(!dir.exists(file.path(main_dir, sub_dir))){
     createDir(main_dir, sub_dir)
   }
-  #set.seed(seed)
+  set.seed(seed)
   model <- running_rsf(train_data)
   saving_dir <- file.path(main_dir, sub_dir)
   save(model, file = paste0(saving_dir,'/', model_name, '.RData'))
