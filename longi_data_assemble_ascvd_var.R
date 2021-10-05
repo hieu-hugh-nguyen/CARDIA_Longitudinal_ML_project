@@ -26,8 +26,6 @@ var_dict <- read.csv(paste0(work_dir,'/csv_files/','longi_data_avalability_dicti
 
 
 
-var_dict_all_var <- read.csv(paste0(work_dir,'/csv_files/','longi_data_avalability_dictionary.csv'))
-
 
 
 exam_years <- c(0, 2, 5, 7, 10, 15, 20, 25, 30)

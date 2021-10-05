@@ -22,11 +22,93 @@ source(paste0(source_dir,'/Git/code/snippet/createDir.R'))
 source(paste0(source_dir,'/Git/code/snippet/subsetDataTopnVar.R'))
 
 
-var_dict <- read.csv(paste0(work_dir,'/csv_files/','longi_data_avalability_dictionary_ascvd_risk_factors2.csv'))
+var_dict <- read.csv(paste0(work_dir,'/csv_files/','longi_data_avalability_dictionary_no_questionnaire2.csv'))
+
+# filter out repeated measures appear in fewer or equal 3 exams
+select_var <- c('BMI','HGT','HIP', 'C20HIPS1', 'WGT', 'WST1','ARMCI'
+                ,'AVGDI' ,'DAVG' # diastolic bp
+                ,'AVGSY' ,'SAVG' # systolic bp
+                ,'PULSE' ,'POP' ,'POPRES' # PULSE OBLITERATION PRESSURE
+
+                ,'SEX' ,'APOB'
+                ,'CREAT'
+                ,'CRP'
+                
+                ,'CGLU' ,'CRPBN' #C-REACTIVE PROTEIN IN uG PER MLe 
+                ,'UACID' ,'CUACID' # calibrated uric acid (only avai in Y10 and 15)
+                # BLEFIBR CLEFIBR DLEFIBR # No FIBRINOGEN (MG/DL) not enough people having it
+                ,'GLU' # fasting glucose 
+                ,'INS'
+                ,'LDL'
+                ,'NTRIG'
+                ,'RATIO' #ALB/CREAT RATIO (mg/g) 1000*(UALB/UCRET)
+                ,'ALBUM' ,'UALB' #URINARY ALBUMIN
+                ,'VLDL'
+                ,'ASMA' #CURRENTLY TAKING MEDS FOR ASTHMA
+                ,'ASTH' # asthma?
+                ,'BLD' #BLOOD OR LYMPH CANCER?
+                ,'BON' #bone cancer?
+                ,'BRN' #brain cancer?
+                ,'BRON' #Bronchitis?
+                ,'BRS' #breast cancer?
+                ,'BRTHC' # EVER TAKEN BIRTH CONTROL PILLS?
+                ,'CER'
+                ,'CANCR' # CANCER OR TUMOR?
+                ,'CHNOW' # CURRENTLY TAKING MEDS TO LOWER CHOLEST
+                ,'DEP' # DEPRESSION?
+                ,'DIG' #DIGESTIVE DISEASE?
+                ,'DIBNP' # EVER BEEN DIAGNOSED WITH DIABETIC NEUROPATHY?
+                ,'EMPH' # EMPHYSEMA?
+                ,'EPI' #EPILEPSY?
+                ,'GALL' # GALLSTONES OR GALLBLADDER DISEASE?
+                ,'KIDNY'
+                ,'GOUT' # GOUT?
+                ,'HEART' #HEART PROBLEM?
+                ,'HEP' # HEPATITIS?
+                ,'HIV' #
+                ,'HOT' # HYPOTHYROIDISM?
+                ,'HYT' # HYPERTHYROIDISM?
+                ,'HRTAK' # HEART ATTACK?
+                ,'HYSTR' # HAD A HYSTERECTOMY?
+                ,'KIDNY' # KIDNEY PROBLEM?
+                ,'KYS' # KIDNEY STONES?
+                ,'LIVER' # LIVER DISEASE?
+                ,'LUN' # LUNG CANCER?
+                ,'MIG' #MIGRAINE HEADACHES?
+                ,'MS' # MULTIPLE SCLEROSIS?
+                ,'MVP' # MITRAL VALVE PROLAPSE?
+                ,'NEP' # NEPHRITIS OR GLOMERULONEPHRITIS?
+                ,'OSA' # OSTEOARTHRITIS?
+                ,'PNE' #PNEUMONIA?
+                ,'PPREG' # EVER BEEN PREGNANT
+                ,'PREG' ,'PREG.x' # CURRENTLY PREGNANT?
+                ,'PVD' #PERIPHERAL VASCULAR DISEASE?
+
+                # IL-6 not enough avalable data
 
 
+                ,'CHOL'
+                ,'HDL'
+                ,'DIAB'
+                ,'CGTDY' #CIGARETTES, # SMOKED/DAY
 
-var_dict_all_var <- read.csv(paste0(work_dir,'/csv_files/','longi_data_avalability_dictionary.csv'))
+                
+                # imaging variables
+
+
+                )
+
+
+var_dict_imaging <- var_dict %>% filter((var_group == 'imaging'))
+
+write.csv(var_dict_imaging, file = paste0(work_dir,'/csv_files/longi_data_availability_dictionary_imaging.csv'),row.names = F)
+
+
+var_dict_filtered <- var_dict %>% filter((varname_longi %in% select_var))
+
+write.csv(var_dict_filtered, file = paste0(work_dir,'/csv_files/longi_data_availability_dictionary_filtered.csv'),row.names = F)
+
+
 
 
 
@@ -147,6 +229,19 @@ data_longi_long_complete_cases <- data_longi_long_na_rm %>% na.omit()
 data_longi_long_for_analysis <- data_longi_long_complete_cases %>% filter(exam_year<time_te_in_yrs)
 
 write.csv(data_longi_long_for_analysis, file = paste0(work_dir,'/csv_files/data_longi_long_format_ascvd_risk_factors.csv'),row.names = F)
+
+# hard-code other non-continuous variables for cases in which missing data happen prior to non-missing data
+
+# just try carried forward for now
+# need to decide on pool of participants to compare across groups: baseline, most recent values, y15, longitudinal (tsfresh, rsslam, joint modeling, LSTM?)
+
+# all participants in Y15, baseline, Y15, and longi (consistant group of people)
+# line up by start 
+# back line-up? last points versus all prior points 
+# outcome =? 
+
+
+
 
 
 

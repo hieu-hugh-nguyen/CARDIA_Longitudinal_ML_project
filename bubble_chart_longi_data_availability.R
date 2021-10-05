@@ -25,18 +25,18 @@ longi_data_dict <- read.csv(paste0(work_dir,'/csv_files/longi_data_avalability_d
 # top_var_y5 <- var_ranking_y5 %>% 
 
 
-top_var_longterm_y5 <- c("DIBAG","SMKYR","AVGDI","VLDL","AVGSY","NTRIG"
-," MHAGE","DPINTAE","CGTDY","MMLVEXFS","LDL","ARMCI","MMLVESS","WST1","MMLVPWD","MMLAD"
-,"DPVAE","WGT","ED")
-
-longi_data_dict_top_y5_var_dup_avai <- longi_data_dict %>%  arrange(exam_year) %>% filter(varname_longi %in% top_var_longterm_y5)
-
-longi_data_dict_top_y5_var <- longi_data_dict_top_y5_var_dup_avai %>%
-  #filter(duplicated(Variable.Name) == FALSE) %>%
-  # remove other duplicated values 
-  filter(!(Variable.Name %in% c('E53WGT', 'H76WGT', 'H40WGT')))
-saving.dir = file.path(work_dir,'csv_files')
-write.csv(longi_data_dict_top_y5_var, file = paste0(saving.dir,'/longi_data_avalability_top_y5_var.csv'), row.names = F)
+# top_var_longterm_y5 <- c("DIBAG","SMKYR","AVGDI","VLDL","AVGSY","NTRIG"
+# ," MHAGE","DPINTAE","CGTDY","MMLVEXFS","LDL","ARMCI","MMLVESS","WST1","MMLVPWD","MMLAD"
+# ,"DPVAE","WGT","ED")
+# 
+# longi_data_dict_top_y5_var_dup_avai <- longi_data_dict %>%  arrange(exam_year) %>% filter(varname_longi %in% top_var_longterm_y5)
+# 
+# longi_data_dict_top_y5_var <- longi_data_dict_top_y5_var_dup_avai %>%
+#   #filter(duplicated(Variable.Name) == FALSE) %>%
+#   # remove other duplicated values 
+#   filter(!(Variable.Name %in% c('E53WGT', 'H76WGT', 'H40WGT')))
+# saving.dir = file.path(work_dir,'csv_files')
+# write.csv(longi_data_dict_top_y5_var, file = paste0(saving.dir,'/longi_data_avalability_top_y5_var.csv'), row.names = F)
 
 
 # Plotting:
@@ -95,7 +95,7 @@ longi_data_dict_dup_rm <- longi_data_dict %>% arrange(exam_year) %>% dplyr::filt
 
 library(tidyr)
 
-bubble_longi_data_dict <- longi_data_dict %>% arrange(exam_year) %>% dplyr::select(exam_year, varname_longi, non_missing_per) %>% tidyr::pivot_wider(names_from = exam_year, values_from = non_missing_per)
+bubble_longi_data_dict <- longi_data_dict %>% arrange(exam_year) %>% dplyr::select(exam_year, varname_longi, non_missing_per,Variable.Label) %>% tidyr::pivot_wider(names_from = exam_year, values_from = non_missing_per)
 saving.dir = file.path(work_dir,'csv_files')
 write.csv(bubble_longi_data_dict %>% apply(2,as.character), file = paste0(saving.dir,'/longi_data_avalability_bubble_format2.csv'), row.names = F)
 
