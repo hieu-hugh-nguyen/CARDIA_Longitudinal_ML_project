@@ -103,76 +103,49 @@ endpt <- 18; # after Year 15
 eval_times <- seq(1, endpt, by = 1)
 
 
-# data <- data_tsfeatures
-# 
-# for (fold in 1:nfolds){
-#   # Training and fitting model:
-#   trainingid <- na.omit(c(trainingid_all[,fold], validationid_all[,fold]))
-#   train_data <- data %>% filter(ID %in% trainingid)
-#   test_data <- data %>% filter((ID %in% testingid_all[,fold])) 
-#   train_id <- train_data$ID
-#   test_id <- test_data$ID
-#   train_data$ID <- NULL
-#   test_data$ID <- NULL
-#   
-#   
-#   model_name <- 'rsf_ascvd_var_tsfeatures'
-#   gc()
-#   main_dir <- paste0(work_dir, '/rdata_files')
-#   sub_dir <- paste0(model_name, '_fold_',fold)
-#   
-#   if(!dir.exists(file.path(main_dir, sub_dir))){
-#     createDir(main_dir, sub_dir)
-#   }
-#   #set.seed(seed)
-#   model <- running_rsf(train_data)
-#   saving_dir <- file.path(main_dir, sub_dir)
-#   save(model, file = paste0(saving_dir,'/', model_name, '.RData'))
-#   
-#   
-#   
-#   # Test set performance: ###################################################################
-#   loading.dir <- paste0(work_dir, '/rdata_files/', model_name, '_fold_', fold)
-#   saving.dir <- loading.dir
-#   trained_data <- train_data
-#   trained_model <- model
-#   
-#   tryCatch({
-#     
-#     # probability of having had the disease:
-#     prob_risk_test <- predictRisk.rsf(trained_model
-#                                       , newdata = test_data
-#                                       , times = eval_times
-#     )
-#     prob_risk_test_with_ID <- cbind(test_id, test_data)
-#     save(prob_risk_test_with_ID
-#          , file = paste0(saving.dir, '/prob_risk_test_set_with_ID.RData'))
-#     
-#     
-#     
-#     prob_risk_test[is.na(prob_risk_test)] = 0
-#     performance_testset = eval_performance2(prob.risk.test.set = prob_risk_test
-#                                             , test.data = test_data
-#                                             , trained.data = trained_data
-#                                             , eval.times = eval_times
-#     )
-#     save(performance_testset
-#          , file = paste0(saving.dir, '/performance_testset.RData'))
-#     
-#     
-#     
-#     prob_risk_train <- predictRisk.rsf(trained_model
-#                                        , newdata = trained_data
-#                                        , times = eval_times
-#     )
-#     prob_risk_train_with_ID <- cbind(train_id, trained_data)
-#     save(prob_risk_train_with_ID
-#          , file = paste0(saving.dir, '/prob_risk_train_set_with_ID.RData'))
-#     
-#   }, error=function(e){cat("ERROR :",conditionMessage(e), "\n")})
-#   
-#   
-# }
+data <- data_tsfeatures
+
+for (fold in 1:nfolds){
+  # Training and fitting model:
+  trainingid <- na.omit(c(trainingid_all[,fold], validationid_all[,fold]))
+  train_data <- data %>% filter(ID %in% trainingid)
+  test_data <- data %>% filter((ID %in% testingid_all[,fold]))
+  train_id <- train_data$ID
+  test_id <- test_data$ID
+  train_data$ID <- NULL
+  test_data$ID <- NULL
+
+
+  model_name <- 'rsf_ascvd_var_tsfeatures'
+  gc()
+  main_dir <- paste0(work_dir, '/rdata_files')
+  sub_dir <- paste0(model_name, '_fold_',fold)
+
+  if(!dir.exists(file.path(main_dir, sub_dir))){
+    createDir(main_dir, sub_dir)
+  }
+  #set.seed(seed)
+#  model <- running_rsf(train_data)
+  saving_dir <- file.path(main_dir, sub_dir)
+#  save(model, file = paste0(saving_dir,'/', model_name, '.RData'))
+
+  # var ranking: #################################################################################
+  
+  model = get(load(paste0(saving_dir,'/', model_name, '.RData')))
+  library(randomForestSRC)
+  max.subtree = max.subtree(model, conservative = F)
+  #save(max.subtree, file = paste(saving.dir, '/RF_maxtree.Rdata', sep = ''))
+  
+  # Get minimal depth of maximal subtree in terms of variable name, ascending order:
+  allvardepth = sort(max.subtree$order[, 1])
+  allvardepth.df = data.frame(Variable=names(allvardepth),MinDepthMaxSubtree=allvardepth,row.names = NULL)
+  
+  allvardepth.df$normalized_depth = normalize_var_imp(allvardepth.df$MinDepthMaxSubtree)
+  
+  write.csv(allvardepth.df, file = paste(saving_dir, '/depth_rank.csv', sep = ''),row.names=F)
+  
+  
+}
 
 
 
@@ -210,12 +183,13 @@ for (fold in 1:nfolds){
     createDir(main_dir, sub_dir)
   }
   #set.seed(seed)
-  model <- running_rsf(train_data)
+#  model <- running_rsf(train_data)
   saving_dir <- file.path(main_dir, sub_dir)
-  save(model, file = paste0(saving_dir,'/', model_name, '.RData'))
+#  save(model, file = paste0(saving_dir,'/', model_name, '.RData'))
   
   
   # var ranking: #################################################################################
+  model = get(load(paste0(saving_dir,'/', model_name, '.RData')))
   library(randomForestSRC)
   max.subtree = max.subtree(model, conservative = F)
   #save(max.subtree, file = paste(saving.dir, '/RF_maxtree.Rdata', sep = ''))
@@ -230,54 +204,5 @@ for (fold in 1:nfolds){
   
   
   
-  # Test set performance: ###################################################################
-  loading.dir <- paste0(work_dir, '/rdata_files/', model_name, '_fold_', fold)
-  saving.dir <- loading.dir
-  trained_data <- train_data
-  trained_model <- model
-  
-  tryCatch({
-    
-    # probability of having had the disease:
-    prob_risk_test <- predictRisk.rsf(trained_model
-                                      , newdata = test_data
-                                      , times = eval_times
-    )
-    prob_risk_test_with_ID <- cbind(test_id, test_data)
-    save(prob_risk_test_with_ID
-         , file = paste0(saving.dir, '/prob_risk_test_set_with_ID.RData'))
-    
-    
-    
-    prob_risk_test[is.na(prob_risk_test)] = 0
-    performance_testset = eval_performance2(prob.risk.test.set = prob_risk_test
-                                            , test.data = test_data
-                                            , trained.data = trained_data
-                                            , eval.times = eval_times
-    )
-    save(performance_testset
-         , file = paste0(saving.dir, '/performance_testset.RData'))
-    
-    
-    
-    prob_risk_train <- predictRisk.rsf(trained_model
-                                       , newdata = trained_data
-                                       , times = eval_times
-    )
-    prob_risk_train_with_ID <- cbind(train_id, trained_data)
-    save(prob_risk_train_with_ID
-         , file = paste0(saving.dir, '/prob_risk_train_set_with_ID.RData'))
-    
-  }, error=function(e){cat("ERROR :",conditionMessage(e), "\n")})
-  
-  
-  # VIMP:
-  
-  library(randomForestSRC)
-  max.subtree = max.subtree(trained_model, conservative = F)
-  #save(max.subtree, file = paste(saving.dir, '/RF_maxtree.Rdata', sep = ''))
-  
-  # Get minimal depth of maximal subtree in terms of variable name, ascending order:
-  allvardepth = sort(max.subtree$order[, 1])
-  allvardepth.df = data.frame(Variable=names(allvardepth),MinDepthMaxSubtree=allvardepth,row.names = NULL)
+ 
 }
