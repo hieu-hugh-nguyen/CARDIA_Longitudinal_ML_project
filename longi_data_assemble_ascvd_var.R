@@ -124,7 +124,7 @@ data_longi_long <- data_longi_long %>% mutate(HBM = case_when(HBM  == 1 ~ 0
                                       mutate(SMKNW = case_when(SMKNW  == 1 ~ 0
                                                               ,SMKNW == 2 ~ 1
                                                               ,SMKNW == 8 ~ 0
-                                               
+                                      ))
 
 # Remove completely missing years (when all varying measurements in one exam year are missing):
 data_longi_long_varying_var <- data_longi_long %>% dplyr::select(-one_of(c(time_independent_var, 'exam_year', 'time_te_in_yrs','AGE_Y0')))
@@ -138,7 +138,10 @@ data_longi_long_na_rm$HBM[data_longi_long_na_rm$HBM %>% is.na()] <- 0
 # assume that missing SMKNW status means the person is not smoking regularly (need to check again)
 data_longi_long_na_rm$SMKNW[data_longi_long_na_rm$SMKNW %>% is.na()] <- 0 
                #,is.na(DIAB) ~ 0
-                                      )) 
+
+
+
+
 data_longi_long_complete_cases <- data_longi_long_na_rm %>% na.omit() 
 # 5109/5114 have completed cases
 
