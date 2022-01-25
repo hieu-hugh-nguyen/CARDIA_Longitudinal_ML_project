@@ -114,16 +114,16 @@ missing_table <- (5115-colSums(is.na(data_longi_wide))) %>% as.data.frame()
 # for variable <currently taking high-blood pressure meds, 1=NO, 2=YES, 8= note sure/treated as NO, missing = NO
 data_longi_long <- data_longi_long %>% mutate(HBM = case_when(HBM  == 1 ~ 0
                                                              ,HBM == 2 ~ 1
-                                                             ,HBM == 8 ~ 1
+                                                             ,HBM == 8 ~ 0
                                                              )) %>% 
                                       mutate(DIAB = case_when(DIAB  == 1 ~ 0
                                                              ,DIAB == 2 ~ 1
-                                                             ,DIAB == 8 ~ 1
+                                                             ,DIAB == 8 ~ 0
                                                              #,is.na(DIAB) ~ 0
                                                              )) %>% 
                                       mutate(SMKNW = case_when(SMKNW  == 1 ~ 0
                                                               ,SMKNW == 2 ~ 1
-                                                              ,SMKNW == 8 ~ 1
+                                                              ,SMKNW == 8 ~ 0
                                                
 
 # Remove completely missing years (when all varying measurements in one exam year are missing):
