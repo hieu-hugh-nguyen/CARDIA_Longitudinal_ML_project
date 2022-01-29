@@ -108,32 +108,46 @@ data_longi_long = reshape(data_longi_wide, direction = 'long', idvar = 'ID', sep
 # Deal with missing data: ########################################################################################################
 
 
-missing_table <- (5115-colSums(is.na(data_longi_wide))) %>% as.data.frame()
+non_missing_table <- (5114-colSums(is.na(data_longi_wide))) %>% as.data.frame()
 
 # recode some variables:
 # for variable <currently taking high-blood pressure meds, 1=NO, 2=YES, 8= note sure/treated as NO, missing = NO
-data_longi_long <- data_longi_long %>% mutate(HBM = case_when(HBM  == 1 ~ 0
+data_longi_long_questionnaire_recode <- data_longi_long %>% mutate(HBM = case_when(HBM  == 1 ~ 0
                                                              ,HBM == 2 ~ 1
                                                              ,HBM == 8 ~ 0
+                                                          #   ,is.na(HBM) ~ 0 # Don't fill in NA with 0 now
                                                              )) %>% 
                                       mutate(DIAB = case_when(DIAB  == 1 ~ 0
                                                              ,DIAB == 2 ~ 1
                                                              ,DIAB == 8 ~ 0
-                                                             #,is.na(DIAB) ~ 0
+                                                          #   ,is.na(DIAB) ~ 0
                                                              )) %>% 
                                       mutate(SMKNW = case_when(SMKNW  == 1 ~ 0
                                                               ,SMKNW == 2 ~ 1
                                                               ,SMKNW == 8 ~ 0
+                                                            #  ,is.na(SMKNW) ~ 0
                                       ))
 
-# Remove completely missing years (when all varying measurements in one exam year are missing):
-data_longi_long_varying_var <- data_longi_long %>% dplyr::select(-one_of(c(time_independent_var, 'exam_year', 'time_te_in_yrs','AGE_Y0')))
+
+
+# Remove completely missing Exam years (when all varying measurements in one exam year are missing):
+# indicating the subjects of interest did not attend the exam and thus were removed from the long format
+data_longi_long_varying_var <- data_longi_long_questionnaire_recode %>% dplyr::select(-one_of(c(time_independent_var, 'exam_year', 'time_te_in_yrs','AGE_Y0')))
 completely_missing_rows <- which(rowSums(is.na(data_longi_long_varying_var)) == ncol(data_longi_long_varying_var))
-data_longi_long_na_rm <- data_longi_long %>% slice(-completely_missing_rows)
+
+if (is.null(completely_missing_rows)){
+  data_longi_long_na_rm <- data_longi_long_questionnaire_recode
+}else{
+  data_longi_long_na_rm <- data_longi_long_questionnaire_recode %>% slice(-completely_missing_rows)
+}
+
 
 
 # treat missing HBM status as not taking HBM, because participant can only see the question for HBM if they indicates they have hypertension
 data_longi_long_na_rm$HBM[data_longi_long_na_rm$HBM %>% is.na()] <- 0 
+
+# fill missing NA in Diabetes as zero (assumming they don't have diabetes)
+data_longi_long_na_rm$DIAB[data_longi_long_na_rm$DIAB %>% is.na()] <- 0 
 
 # assume that missing SMKNW status means the person is not smoking regularly (need to check again)
 data_longi_long_na_rm$SMKNW[data_longi_long_na_rm$SMKNW %>% is.na()] <- 0 
@@ -141,13 +155,22 @@ data_longi_long_na_rm$SMKNW[data_longi_long_na_rm$SMKNW %>% is.na()] <- 0
 
 
 
-
+# remove cases with at least one covariate with missing value:
 data_longi_long_complete_cases <- data_longi_long_na_rm %>% na.omit() 
-# 5109/5114 have completed cases
+print(paste0('number of subjects with completed cases: ', data_longi_long_complete_cases$ID %>% unique() %>% length()))
+# 5110/5114 unique patients have completed cases
+# closer look at the number of cases removed: 
+data_rm <- data_longi_long_na_rm %>% anti_join(data_longi_long_complete_cases)
+# 624 instances rm, these isntances did not have CHOL and HDL values even though had SBP
+ 
+# remove instances that have exam_year data after their event date (impossible):
+data_longi_long_na_rm_for_analysis <- data_longi_long_na_rm %>% filter(exam_year<time_te_in_yrs)
+data_longi_long_complete_cases_for_analysis <- data_longi_long_complete_cases %>% filter(exam_year<time_te_in_yrs)
+exam_year_after_event_date <- data_longi_long_na_rm %>% filter(exam_year>=time_te_in_yrs)
+# 337 instances rm: those who had follow-up data even after their CVD event date
 
-data_longi_long_for_analysis <- data_longi_long_complete_cases %>% filter(exam_year<time_te_in_yrs)
-
-write.csv(data_longi_long_for_analysis, file = paste0(work_dir,'/csv_files/data_longi_long_format_ascvd_risk_factors.csv'),row.names = F)
+write.csv(data_longi_long_complete_cases_for_analysis, file = paste0(work_dir,'/csv_files/data_longi_long_format_ascvd_risk_factors_removed_missing_data.csv'),row.names = F)
+write.csv(data_longi_long_na_rm_for_analysis, file = paste0(work_dir,'/csv_files/data_longi_long_format_ascvd_risk_factors_with_missing_data.csv'),row.names = F)
 
 
 

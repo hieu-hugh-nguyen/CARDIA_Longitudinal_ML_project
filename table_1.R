@@ -35,23 +35,41 @@ loading_dir = paste0(work_dir, '/csv_files')
 data_longi_long_for_analysis <- read.csv(paste0(work_dir,'/csv_files/data_longi_long_format_ascvd_risk_factors.csv'))
 
 
+## Filtering process: ########################################
+#exclude subjects who didn't show up to exam year 15: 
+subjects_y15 <- read.csv(paste0(work_dir,'/csv_files/subjects_showed_up_to_Y15.csv'))
+subjects_y0 <- read.csv(paste0(work_dir,'/csv_files/subjects_showed_up_to_Y0.csv'))
+
 #exclude instances with events or censored before exam year 15 
-data_longi_long_y15 <- data_longi_long_for_analysis %>% filter(time_te_in_yrs >15) 
-
 # only include longitudinal data from y0 to y15:
-data_longi_long_up_to_y15 <- data_longi_long_y15 %>% filter(exam_year <=15)
+data_longi_long_up_to_y15 <- data_longi_long_for_analysis %>% 
+  filter(ID %in% subjects_y15$ID) %>% 
+  filter(time_te_in_yrs >15) %>%
+  filter(exam_year <=15)
 
-# baseline data:
+# subjects with event or censored prior to Y15 exam:
+data_longi_long_for_analysis %>% 
+  filter(ID %in% subjects_y15$ID) %>% 
+  filter(time_te_in_yrs <= 15) %>% nrow() %>% print()
+
+
+
+# baseline data for everyone:
+data_at_baselin_everyone <- data_longi_long_for_analysis %>% filter(!duplicated(ID, fromLast = FALSE))
+
+
+# 
 data_at_baseline <- data_longi_long_up_to_y15 %>% filter(!duplicated(ID, fromLast=FALSE)) 
 
 # most recent data at landmark time (y15):
 data_most_recent_by_y15 <- data_longi_long_up_to_y15 %>% filter(!duplicated(ID, fromLast=TRUE))
 
 
-data_at_baseline_full <- data_longi_long_for_analysis %>% filter(!duplicated(ID, fromLast=FALSE)) 
 
 
-table1(~factor(MALE)+factor(RACEBLACK)+., data = data_at_baseline_full)
+## Table 1:
+table1(~factor(MALE)+factor(RACEBLACK)+., data = data_at_baseline)
+table1(~factor(MALE)+factor(RACEBLACK)+., data = data_most_recent_by_y15)
 
 #' #'C08DIAB' 'HBP05'
 #' var = 'C08KIDNY'
