@@ -17,7 +17,8 @@ lapply(list.of.packages, require, character.only = T)
 
 ncores <- parallel::detectCores(all.tests = FALSE, logical = TRUE)
 
-parallelMap::parallelStartSocket(ncores-1)
+#parallelMap::parallelStartSocket(ncores-1)
+#parallelMap::parallelStartSocket(15)
 
 # source snippet functions:
 source_dir <- 'U:/Hieu/CARDIA_project/CARDIA_project/Git'
@@ -36,25 +37,27 @@ source(paste0(source_dir,'/code/snippet/eval_performance_using_different_auc_pac
 # load the dataset
 loading_dir = paste0(work_dir, '/csv_files')
 
-data_longi_long_for_analysis <- read.csv(paste0(work_dir,'/csv_files/data_longi_long_format_ascvd_risk_factors.csv'))
+data_longi_long_for_analysis <- read.csv(paste0(work_dir,'/csv_files/data_longi_long_format_ascvd_risk_factors_removed_missing_data.csv'))
+#'/csv_files/data_longi_long_format_ascvd_risk_factors_with_missing_data.csv'
+#
+subjects_in_cohort <- read.csv(paste0(work_dir,'/csv_files/subjects_in_final_analysis_cohort.csv'))
 
-
-#exclude instances with events or censored before exam year 15 
-data_longi_long_y15 <- data_longi_long_for_analysis %>% filter(time_te_in_yrs >15) 
-
-# only include medical history from y0 to y15:
-data_longi_long_up_to_y15 <- data_longi_long_y15 %>% filter(exam_year <=15)
+data_longi_long_up_to_y15 <- data_longi_long_for_analysis %>% filter(exam_year <=15)
+data_longi_analysis_cohort <- data_longi_long_up_to_y15 %>% filter(ID %in% subjects_in_cohort[[1]])
 
 # baseline data:
-data_at_baseline <- data_longi_long_up_to_y15 %>% filter(!duplicated(ID, fromLast=FALSE)) 
-
-# most recent data at landmark time (y15):
-data_most_recent_by_y15 <- data_longi_long_up_to_y15 %>% filter(!duplicated(ID, fromLast=TRUE))
+# data_at_baseline <- data_longi_long_for_analysis %>% filter(!duplicated(ID, fromLast=FALSE)) 
+data_at_baseline <- data_longi_analysis_cohort %>% filter(ID %in% subjects_in_cohort[[1]]) %>% filter(exam_year == 0)
 
 
 
-# NO truncation of time since this is joint modeling to make start time at y15 (to avoid 15 years of immortal time):
-data <- data_longi_long_up_to_y15 %>% 
+# NO truncation of time since this is joint modeling:
+data <- data_longi_analysis_cohort %>% 
+  # mutate(time_te_in_yrs = time_te_in_yrs -15) %>% 
+  dplyr::select(-time) %>% filter(time_te_in_yrs >0) %>%
+  rename(event = status) %>% rename(time = time_te_in_yrs)
+  #dplyr::select(-exam_year)
+data_at_baseline_formatted <- data_at_baseline %>% 
   # mutate(time_te_in_yrs = time_te_in_yrs -15) %>% 
   dplyr::select(-time) %>% filter(time_te_in_yrs >0) %>%
   rename(event = status) %>% rename(time = time_te_in_yrs)
@@ -83,13 +86,15 @@ testingid_all <- read.csv(paste0(work_dir,'/csv_files/all_testing_set_ID.csv'))
 
 seed <- 4495
 set.seed(seed)
-nfolds <- 1
+nfolds <- 10
 
-endpt <- 33; # after Year 15
+endpt <- 33-1; # after Year 15
 eval_times <- seq(16, endpt, by = 1)
 
 
-for (fold in 1:nfolds){
+#for (fold in 4:nfolds){
+for (fold in c(9,6,5,4)){
+ # fold = 
   # Training and fitting model:
   trainingid <- na.omit(c(trainingid_all[,fold], validationid_all[,fold]))
   train_data <- data %>% filter(ID %in% trainingid)
@@ -132,7 +137,7 @@ for (fold in 1:nfolds){
   data_for_surv <- data_at_baseline %>% filter(ID %in% train_id) %>%
     dplyr::select(-time) %>% filter(time_te_in_yrs >0) %>%
     rename(event = status) %>% rename(time = time_te_in_yrs)
-  CoxFit <- coxph(Surv(time, event) ~ AGE_Y0+MALE+RACEBLACK+CHOL+DIAB+HBM+HDL+SBP+SMKNW
+  CoxFit <- coxph(Surv(time, event) ~ AGE_Y0+MALE+RACEBLACK+DIAB+HBM+SMKNW ## +CHOL+HDL+SBP # don't need longitudinal vars in Cox formula
                   , data = data_for_surv
                   #dplyr::select(-exam_year)
                   , model = TRUE)
@@ -144,18 +149,14 @@ for (fold in 1:nfolds){
   JMFit <- JMbayes::mvJointModelBayes(MixedModelFit, CoxFit, timeVar = "exam_year")
   jm_model_runtime <- Sys.time()-start_time
   
+  print(paste0('Model training elapsed time =',jm_model_runtime))
   
   
   
   
   
-  
-  
-  # running_jmbayes <- function(train_data){
-  #   
-  # }
-    
-  
+  model<- JMFit
+
   #set.seed(seed)
   saving_dir <- file.path(main_dir, sub_dir)
   save(model, file = paste0(saving_dir,'/', model_name, '.RData'))
@@ -166,13 +167,33 @@ for (fold in 1:nfolds){
   loading.dir <- paste0(work_dir, '/rdata_files/', model_name, '_fold_', fold)
   saving.dir <- loading.dir
   trained_data <- train_data
-  trained_model <- model
+  # trained_model <- model
+  trained_model <- get(load(paste0(saving_dir,'/', model_name, '.RData')))
   
-  tryCatch({
+ # tryCatch({
+    
+    
+    # roc <- rocJM(model, newdata = test_data, Tstart = 15, Dt = 1, idVar = 'ID')
+    # 
+    # plot(roc)
+    
+    auc_over_time <- rep(NA, base::length(eval_times))
+    
+    for(eval_time in 1: base::length(eval_times)){
+      auc <- aucJM(model, newdata = test_data, Tstart = 15, Thoriz = eval_times[eval_time], idVar = 'ID')
+      auc_over_time[eval_time] = auc$auc
+      print(auc_over_time)
+    }
+    # auc_over_time
+    save(auc_over_time
+         , file = paste0(saving.dir, '/auc_over_time_testset.RData'))
+    
+    
+    
+    
+    
     
     # probability of having had the disease:
-    
-    
     
     predictRisk.JMbayes <- function(trained_model
                                    , newdata = test_data
@@ -209,12 +230,15 @@ for (fold in 1:nfolds){
     }
       
     
+    
+    
+    
     prob_risk_test_with_ID <- predictRisk.JMbayes(JMFit, newdata = test_data, times = eval_times)
     save(prob_risk_test_with_ID
          , file = paste0(saving.dir, '/prob_risk_test_set_with_ID.RData'))
     
     
-    prob_risk_test_with_ID <- prob_risk_test
+#    prob_risk_test_with_ID <- prob_risk_test
     prob_risk_test <- prob_risk_test_with_ID %>% dplyr::select(-test_id) %>% as.matrix()
 
     prob_risk_test[is.na(prob_risk_test)] = 0
@@ -226,125 +250,113 @@ for (fold in 1:nfolds){
     save(performance_testset
          , file = paste0(saving.dir, '/performance_testset.RData'))
     
-    
-    
-    prob_risk_train <- predictRisk.rsf(trained_model
-                                      , newdata = trained_data 
-                                      , times = eval_times
-    )
-    prob_risk_train_with_ID <- cbind(train_id, trained_data)
+
+    #     prob_risk_train <- predictRisk.rsf(trained.model = model
+    #                                    , newdata = trained_data 
+    #                                    , times = eval_times
+    # )
+    # prob_risk_train_with_ID <- cbind(train_id, trained_data)
+    # 
+    prob_risk_train_with_ID <- predictRisk.JMbayes(JMFit, newdata = trained_data, times = eval_times)
     save(prob_risk_train_with_ID
          , file = paste0(saving.dir, '/prob_risk_train_set_with_ID.RData'))
     
-  }, error=function(e){cat("ERROR :",conditionMessage(e), "\n")})
+
+    
+    
+  #}, error=function(e){cat("ERROR :",conditionMessage(e), "\n")})
+  
   
   
 }
 
 
-roc <- rocJM(JMFit, newdata = test_data, Tstart = 15, Dt = 1, idVar = 'ID')
-
-plot(roc)
-
-auc_over_time <- rep(NA, base::length(eval_times))
-
-for(eval_time in 1: base::length(eval_times)){
-  auc <- aucJM(JMFit, newdata = test_data, Tstart = 15, Thoriz = eval_times[eval_time], idVar = 'ID')
-  auc_over_time[eval_time] = auc$auc
-  print(auc_over_time)
-}
-auc_over_time
-save(auc_over_time
-     , file = paste0(saving.dir, '/auc_over_time_testset.RData'))
 
 
 
+# endpt <- 33; # after Year 15
+# eval_times <- seq(16, endpt, by = 1)
+# 
+# auc_over_time2 <- rep(NA, base::length(eval_times))
+# for(eval_time in 1: base::length(eval_times)){
+#   auc <- aucJM(JMFit, newdata = test_data, Tstart = 15, Thoriz = eval_times[eval_time], idVar = 'ID')
+#   auc_over_time2[eval_time] = auc$auc
+#   print(auc_over_time2)
+# }
+# auc_over_time2
+# 
+# save(auc_over_time
+#      , file = paste0(saving.dir, '/auc_over_time_testset.RData'))
+# 
 
 
 
-endpt <- 33; # after Year 15
-eval_times <- seq(16, endpt, by = 1)
-
-auc_over_time2 <- rep(NA, base::length(eval_times))
-for(eval_time in 1: base::length(eval_times)){
-  auc <- aucJM(JMFit, newdata = test_data, Tstart = 15, Thoriz = eval_times[eval_time], idVar = 'ID')
-  auc_over_time2[eval_time] = auc$auc
-  print(auc_over_time2)
-}
-auc_over_time2
-
-save(auc_over_time
-     , file = paste0(saving.dir, '/auc_over_time_testset.RData'))
-
-
-
-
-
-for (fold in 1:nfolds){
-  # Training and fitting model:
-  trainingid <- na.omit(c(trainingid_all[,fold], validationid_all[,fold]))
-  train_data <- data %>% filter(ID %in% trainingid)
-  test_data <- data %>% filter((ID %in% testingid_all[,fold])) 
-  train_id <- train_data$ID
-  test_id <- test_data$ID
-  train_data$ID <- NULL
-  test_data$ID <- NULL
-  
-  
-  model_name <- 'cox_ascvd_var_y15'
-  gc()
-  main_dir <- paste0(work_dir, '/rdata_files')
-  sub_dir <- paste0(model_name, '_fold_',fold)
-  
-  if(!dir.exists(file.path(main_dir, sub_dir))){
-    createDir(main_dir, sub_dir)
-  }
-  #set.seed(seed)
-  model <- running_coxph(train_data)
-  saving_dir <- file.path(main_dir, sub_dir)
-  save(model, file = paste0(saving_dir,'/', model_name, '.RData'))
-  
-  
-  
-  # Test set performance: ###################################################################
-  loading.dir <- paste0(work_dir, '/rdata_files/', model_name, '_fold_', fold)
-  saving.dir <- loading.dir
-  trained_data <- train_data
-  trained_model <- model
-  
-  tryCatch({
-    
-    # probability of having had the disease:
-    prob_risk_test <- predictRisk.cox(trained_model
-                                      , newdata = test_data
-                                      , times = eval_times
-    )
-    prob_risk_test_with_ID <- cbind(test_id, test_data)
-    save(prob_risk_test_with_ID
-         , file = paste0(saving.dir, '/prob_risk_test_set_with_ID.RData'))
-    
-    
-    
-    prob_risk_test[is.na(prob_risk_test)] = 0
-    performance_testset = eval_performance2(prob.risk.test.set = prob_risk_test
-                                            , test.data = test_data
-                                            , trained.data = trained_data
-                                            , eval.times = eval_times
-    )
-    save(performance_testset
-         , file = paste0(saving.dir, '/performance_testset.RData'))
-    
-    
-    
-    prob_risk_train <- predictRisk.cox(trained_model
-                                       , newdata = trained_data
-                                       , times = eval_times
-    )
-    prob_risk_train_with_ID <- cbind(train_id, trained_data)
-    save(prob_risk_train_with_ID
-         , file = paste0(saving.dir, '/prob_risk_train_set_with_ID.RData'))
-    
-  }, error=function(e){cat("ERROR :",conditionMessage(e), "\n")})
-  
-  
-}
+# 
+# for (fold in 1:nfolds){
+#   # Training and fitting model:
+#   trainingid <- na.omit(c(trainingid_all[,fold], validationid_all[,fold]))
+#   train_data <- data %>% filter(ID %in% trainingid)
+#   test_data <- data %>% filter((ID %in% testingid_all[,fold])) 
+#   train_id <- train_data$ID
+#   test_id <- test_data$ID
+#   train_data$ID <- NULL
+#   test_data$ID <- NULL
+#   
+#   
+#   model_name <- 'cox_ascvd_var_y15'
+#   gc()
+#   main_dir <- paste0(work_dir, '/rdata_files')
+#   sub_dir <- paste0(model_name, '_fold_',fold)
+#   
+#   if(!dir.exists(file.path(main_dir, sub_dir))){
+#     createDir(main_dir, sub_dir)
+#   }
+#   #set.seed(seed)
+#   model <- running_coxph(train_data)
+#   saving_dir <- file.path(main_dir, sub_dir)
+#   save(model, file = paste0(saving_dir,'/', model_name, '.RData'))
+#   
+#   
+#   
+#   # Test set performance: ###################################################################
+#   loading.dir <- paste0(work_dir, '/rdata_files/', model_name, '_fold_', fold)
+#   saving.dir <- loading.dir
+#   trained_data <- train_data
+#   trained_model <- model
+#   
+#   tryCatch({
+#     
+#     # probability of having had the disease:
+#     prob_risk_test <- predictRisk.cox(trained_model
+#                                       , newdata = test_data
+#                                       , times = eval_times
+#     )
+#     prob_risk_test_with_ID <- cbind(test_id, test_data)
+#     save(prob_risk_test_with_ID
+#          , file = paste0(saving.dir, '/prob_risk_test_set_with_ID.RData'))
+#     
+#     
+#     
+#     prob_risk_test[is.na(prob_risk_test)] = 0
+#     performance_testset = eval_performance2(prob.risk.test.set = prob_risk_test
+#                                             , test.data = test_data
+#                                             , trained.data = trained_data
+#                                             , eval.times = eval_times
+#     )
+#     save(performance_testset
+#          , file = paste0(saving.dir, '/performance_testset.RData'))
+#     
+#     
+#     
+#     prob_risk_train <- predictRisk.cox(trained_model
+#                                        , newdata = trained_data
+#                                        , times = eval_times
+#     )
+#     prob_risk_train_with_ID <- cbind(train_id, trained_data)
+#     save(prob_risk_train_with_ID
+#          , file = paste0(saving.dir, '/prob_risk_train_set_with_ID.RData'))
+#     
+#   }, error=function(e){cat("ERROR :",conditionMessage(e), "\n")})
+#   
+#   
+# }

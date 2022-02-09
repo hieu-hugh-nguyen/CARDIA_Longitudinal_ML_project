@@ -10,7 +10,7 @@ setwd(work_dir)
 # load libraries:
 list.of.packages <- c("mlbench",'ggplot2','caret', 'dplyr', 'tibble', 'ROCR','parallelMap'
                       ,'riskRegression', 'survival','randomForestSRC', 'survivalROC'
-                      , 'pec', 'risksetROC','tsfeatures')
+                      , 'pec', 'risksetROC','tsfeatures','survAUC')
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
 lapply(list.of.packages, require, character.only = T)
@@ -29,6 +29,7 @@ source(paste0(source_dir,'/code/snippet/classif_task.R'))
 source(paste0(source_dir,'/code/snippet/predictSurvProb.R'))
 source(paste0(source_dir,'/code/snippet/eval_performance.R'))
 source(paste0(source_dir,'/code/snippet/eval_performance_using_different_auc_package.R'))
+source(paste0(source_dir,'/code/snippet/normalize_var_importance.R'))
 
 
 
@@ -38,34 +39,35 @@ loading_dir = paste0(work_dir, '/csv_files')
 ts_features <- read.csv(paste0(work_dir,'/csv_files/tsfresh_features_filtered.csv'))
 ts_features <- ts_features %>% rename(ID = X)
 
+
+
 # load the dataset
 loading_dir = paste0(work_dir, '/csv_files')
-data_longi_long_for_analysis <- read.csv(paste0(work_dir,'/csv_files/data_longi_long_format_ascvd_risk_factors.csv'))
 
+data_longi_long_for_analysis <- read.csv(paste0(work_dir,'/csv_files/data_longi_long_format_ascvd_risk_factors_removed_missing_data.csv'))
+#'/csv_files/data_longi_long_format_ascvd_risk_factors_with_missing_data.csv'
+#
+subjects_in_cohort <- read.csv(paste0(work_dir,'/csv_files/subjects_in_final_analysis_cohort.csv'))
 
-#exclude instances with events or censored before exam year 15 
-data_longi_long_y15 <- data_longi_long_for_analysis %>% filter(time_te_in_yrs >15) 
-
-# only include medical history from y0 to y15:
-data_longi_long_up_to_y15 <- data_longi_long_y15 %>% filter(exam_year <=15)
+data_longi_long_up_to_y15 <- data_longi_long_for_analysis %>% filter(exam_year <=15)
+data_longi_analysis_cohort <- data_longi_long_up_to_y15 %>% filter(ID %in% subjects_in_cohort[[1]])
 
 # baseline data:
-data_at_baseline <- data_longi_long_up_to_y15 %>% filter(!duplicated(ID, fromLast=FALSE)) 
-
+# data_at_baseline <- data_longi_long_for_analysis %>% filter(!duplicated(ID, fromLast=FALSE)) 
+data_at_baseline <- data_longi_analysis_cohort %>% filter(ID %in% subjects_in_cohort[[1]]) %>% filter(exam_year == 0)
 # most recent data at landmark time (y15):
-data_most_recent_by_y15 <- data_longi_long_up_to_y15 %>% filter(!duplicated(ID, fromLast=TRUE))
-
-
-
-
+data_y15 <- data_longi_analysis_cohort %>% filter(ID %in% subjects_in_cohort[[1]]) %>% filter(exam_year == 15)
 
 # truncate time to make start time at y15 (to avoid 15 years of immortal time):
-data <- data_most_recent_by_y15 %>% 
+data_y15_truncated_tte <- data_y15 %>% 
   mutate(time_te_in_yrs = time_te_in_yrs -15) %>% 
   dplyr::select(-time) %>% filter(time_te_in_yrs >0) %>%
   rename(event = status) %>% rename(time = time_te_in_yrs) %>%
   dplyr::select(-exam_year)
 
+
+
+data <- data_y15_truncated_tte
 # update age variable to be at landmark time:
 data <- data %>% mutate(AGE_Y15 = AGE_Y0 +15) %>% dplyr::select(-AGE_Y0)
 
@@ -96,9 +98,9 @@ testingid_all <- read.csv(paste0(work_dir,'/csv_files/all_testing_set_ID.csv'))
 
 seed <- 4495
 set.seed(seed)
-nfolds <- 1
+nfolds <- 10
 
-endpt <- 18; # after Year 15
+endpt <- 17; # after Year 15
 eval_times <- seq(1, endpt, by = 1)
 
 
@@ -170,6 +172,18 @@ for (fold in 1:nfolds){
     
   }, error=function(e){cat("ERROR :",conditionMessage(e), "\n")})
   
+  
+  ## VIMP:
+  max.subtree = max.subtree(model, conservative = F)
+  #save(max.subtree, file = paste(saving.dir, '/RF_maxtree.Rdata', sep = ''))
+  
+  # Get minimal depth of maximal subtree in terms of variable name, ascending order:
+  allvardepth = sort(max.subtree$order[, 1])
+  allvardepth.df = data.frame(Variable=names(allvardepth),MinDepthMaxSubtree=allvardepth,row.names = NULL)
+  
+  allvardepth.df$normalized_depth = normalize_var_imp(allvardepth.df$MinDepthMaxSubtree)
+  
+  write.csv(allvardepth.df, file = paste(saving_dir, '/depth_rank.csv', sep = ''),row.names=F)
   
 }
 
@@ -258,11 +272,16 @@ for (fold in 1:nfolds){
   
   # VIMP:
   
-  library(randomForestSRC)
-  max.subtree = max.subtree(trained_model, conservative = F)
+  
+  max.subtree = max.subtree(model, conservative = F)
   #save(max.subtree, file = paste(saving.dir, '/RF_maxtree.Rdata', sep = ''))
   
   # Get minimal depth of maximal subtree in terms of variable name, ascending order:
   allvardepth = sort(max.subtree$order[, 1])
   allvardepth.df = data.frame(Variable=names(allvardepth),MinDepthMaxSubtree=allvardepth,row.names = NULL)
+  
+  allvardepth.df$normalized_depth = normalize_var_imp(allvardepth.df$MinDepthMaxSubtree)
+  
+  write.csv(allvardepth.df, file = paste(saving_dir, '/depth_rank.csv', sep = ''),row.names=F)
+  
 }

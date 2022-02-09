@@ -25,27 +25,30 @@ nfold = 5 # 5-fold cross-validation
 num_split_times = 5 # 5 times of 5-fold cross-validation
 
 work_dir = 'U:/Hieu/CARDIA_longi_project'
-
 setwd(work_dir)
-
 
 # load the dataset
 loading_dir = paste0(work_dir, '/csv_files')
 
-data_longi_long_for_analysis <- read.csv(paste0(work_dir,'/csv_files/data_longi_long_format_ascvd_risk_factors.csv'))
+data_longi_long_for_analysis <- read.csv(paste0(work_dir,'/csv_files/data_longi_long_format_ascvd_risk_factors_removed_missing_data.csv'))
+#'/csv_files/data_longi_long_format_ascvd_risk_factors_with_missing_data.csv'
+#
+subjects_in_cohort <- read.csv(paste0(work_dir,'/csv_files/subjects_in_final_analysis_cohort.csv'))
 
-#exclude instances with events or censored before exam year 15 
-data_longi_long_y15 <- data_longi_long_for_analysis %>% filter(time_te_in_yrs >15) 
-
-# only include medical history from y0 to y15:
-data_longi_long_up_to_y15 <- data_longi_long_y15 %>% filter(exam_year <=15)
+data_longi_long_up_to_y15 <- data_longi_long_for_analysis %>% filter(exam_year <=15)
+data_longi_analysis_cohort <- data_longi_long_up_to_y15 %>% filter(ID %in% subjects_in_cohort[[1]])
 
 # baseline data:
-data_at_baseline <- data_longi_long_up_to_y15 %>% filter(!duplicated(ID, fromLast=FALSE)) 
-
+# data_at_baseline <- data_longi_long_for_analysis %>% filter(!duplicated(ID, fromLast=FALSE)) 
+data_at_baseline <- data_longi_analysis_cohort %>% filter(ID %in% subjects_in_cohort[[1]]) %>% filter(exam_year == 0)
 # most recent data at landmark time (y15):
-data_most_recent_by_y15 <- data_longi_long_up_to_y15 %>% filter(!duplicated(ID, fromLast=TRUE))
+data_y15 <- data_longi_analysis_cohort %>% filter(ID %in% subjects_in_cohort[[1]]) %>% filter(exam_year == 15)
 
+# truncate time to make start time at y15 (to avoid 15 years of immortal time):
+data_y15_truncated_tte <- data_y15 %>% 
+  mutate(time_te_in_yrs = time_te_in_yrs -15) %>% 
+  dplyr::select(-time) %>% filter(time_te_in_yrs >0) %>%
+  rename(event = status) %>% rename(time = time_te_in_yrs) 
 
 
 # Stratified sampling: ######################################################################
@@ -55,13 +58,31 @@ data_most_recent_by_y15 <- data_longi_long_up_to_y15 %>% filter(!duplicated(ID, 
 saving.dir = paste0(work_dir,'/rdata_files')
 
 # training-testing split:
-ID.split = stratified_event_split(data_at_baseline,time_var = 'time_to_te_in_yrs',event_var = 'status', id_var = 'ID'
+
+# stratify by time to event, by 4 blocks (0-> 5, 5->10, 10->15, 15+), then by event status within each block:
+
+data_y15_truncated_tte_block_1 <- data_y15_truncated_tte %>% filter(time <=5)
+data_y15_truncated_tte_block_2 <- data_y15_truncated_tte %>% filter(time >5) %>% filter (time <=10)
+data_y15_truncated_tte_block_3 <- data_y15_truncated_tte %>% filter(time >10) %>% filter (time <=15)
+data_y15_truncated_tte_block_4 <- data_y15_truncated_tte %>% filter(time >15)
+
+ID.split_block_1 = stratified_event_split(data_y15_truncated_tte_block_1, time_var = 'time',event_var = 'event', id_var = 'ID'
                                   ,nfold = 5 # 5-fold cross-validation
                                   ,num_split_times = 5 )
+ID.split_block_2 = stratified_event_split(data_y15_truncated_tte_block_2, time_var = 'time',event_var = 'event', id_var = 'ID'
+                                          ,nfold = 5 # 5-fold cross-validation
+                                          ,num_split_times = 5 )
+ID.split_block_3 = stratified_event_split(data_y15_truncated_tte_block_3, time_var = 'time',event_var = 'event', id_var = 'ID'
+                                          ,nfold = 5 # 5-fold cross-validation
+                                          ,num_split_times = 5 )
+ID.split_block_4 = stratified_event_split(data_y15_truncated_tte_block_4, time_var = 'time',event_var = 'event', id_var = 'ID'
+                                          ,nfold = 5 # 5-fold cross-validation
+                                          ,num_split_times = 5 )
 
-train.ID = ID.split$train.ID
-valid.ID = ID.split$valid.ID
-test.ID = ID.split$test.ID
+
+train.ID = rbind(ID.split_block_1$train.ID, ID.split_block_2$train.ID, ID.split_block_3$train.ID, ID.split_block_4$train.ID)
+valid.ID = rbind(ID.split_block_1$valid.ID, ID.split_block_2$valid.ID, ID.split_block_3$valid.ID, ID.split_block_4$valid.ID)
+test.ID = rbind(ID.split_block_1$test.ID, ID.split_block_2$test.ID, ID.split_block_3$test.ID, ID.split_block_4$test.ID)
 
 
 write.csv(train.ID, paste0(work_dir, '/csv_files','/all_training_set_ID.csv')

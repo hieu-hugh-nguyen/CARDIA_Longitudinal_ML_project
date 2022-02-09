@@ -8,15 +8,57 @@ require(reshape2)
 
 
 
-
+nfolds = 10
 
 
 # extract mean c-index values:
 loading.dir = paste0(work_dir,'/rdata_files')
 
-fold =1
 
-jmbayes_auc <-  get(load(paste0(work_dir, '/rdata_files/jmbayes_ascvd_var_y15_fold_', fold,'/auc_over_time_testset.RData')))
+# get_median_auc <- function(nfolds, model_file_name, auc_file_name, auc_file_extension = c('RData','csv')){
+#   
+#   if(auc_file_extension == 'RData'){
+#     auc_matrix <- get(load(paste0(work_dir, '/rdata_files/', model_file_name, '_fold_', 1,'/', auc_file_name,'.RData')))
+#     
+#     for(fold in nfolds){
+#       
+#     }
+#   }
+# 
+# }
+
+
+fold =1
+filename = paste0(work_dir, '/rdata_files/jmbayes_ascvd_var_y15_fold_', fold,'/auc_over_time_testset.RData')
+jmbayes_auc_df <-  data.frame(fold_1 = get(load(filename)))
+
+for (fold in 2:nfolds){
+  filename = paste0(work_dir, '/rdata_files/jmbayes_ascvd_var_y15_fold_', fold,'/auc_over_time_testset.RData')
+  if(file.exists(filename)){
+    auc_curr_fold <-as.numeric(get(load(filename)))
+    auc_curr_fold[is.nan(auc_curr_fold)] <- as.numeric(NA)
+    
+    jmbayes_auc_df[[paste0('fold_',fold)]] <- auc_curr_fold
+  }
+}
+jmbayes_auc_df[is.na(jmbayes_auc_df)] <- as.numeric(NA)
+jmbayes_auc_df <- sapply(jmbayes_auc_df, as.numeric)
+
+
+
+jmbayes_auc_df$median <- median(jmbayes_auc_df[,1:5], na.rm = T)
+
+jmbayes_auc_df %>%
+  rowwise() %>%
+  mutate(med = median(c_across(where(is.numeric)), na.rm = TRUE))
+
+
+
+  #median(jmbayes_auc_df[,1:ncol(jmbayes_auc_df)], na.rm = T)
+
+# eval time from year 16 to year 32 
+# jmbayes_performance_test_set <-  get(load(paste0(work_dir, '/rdata_files/jmbayes_ascvd_var_y15_fold_', fold,'/performance_testset.RData')))
+
 
 dynamic_deephit_auc <- read.csv(paste0(work_dir, '/rdata_files/dynamic_deephit_ascvd_var_fold_', fold,'/dynamic_deephit_c_over_time.csv'))
 dynamic_deephit_auc <- dynamic_deephit_auc[2:nrow(dynamic_deephit_auc),2]
@@ -53,7 +95,13 @@ rsf_y15_performance_testset <- get(load(paste0(work_dir, '/rdata_files/rsf_ascvd
 rsf_y15_auc3 <- rsf_y15_performance_testset$auc
 
 
-rsf_y15_auc <- rowMeans(data.frame(rsf_y15_auc1,rsf_y15_auc2,rsf_y15_auc3))
+
+rsf_y15_df <- data.frame(rsf_y15_auc1,rsf_y15_auc2,rsf_y15_auc3)
+df$median = apply(df, 1, median, na.rm=T)
+
+
+
+
 cox_y15_auc <- rowMeans(data.frame(cox_y15_auc1,cox_y15_auc2,cox_y15_auc3))
 
 eval_times <- seq(1,18, 1)
