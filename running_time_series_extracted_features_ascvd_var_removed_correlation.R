@@ -36,7 +36,7 @@ source(paste0(source_dir,'/code/snippet/normalize_var_importance.R'))
 
 # load extracted timeseries features:
 loading_dir = paste0(work_dir, '/csv_files')
-ts_features <- read.csv(paste0(work_dir,'/csv_files/tsfresh_features_filtered.csv'))
+ts_features <- read.csv(paste0(work_dir,'/csv_files/tsfresh_features_drop_nonunique_drop_na_relevant_df_drop_correlated.csv'))
 ts_features <- ts_features %>% rename(ID = X)
 
 
@@ -74,12 +74,8 @@ data <- data %>% mutate(AGE_Y15 = AGE_Y0 +15) %>% dplyr::select(-AGE_Y0)
 
 # data with ts_features alone:
 
-data_tsfeatures <- data %>% dplyr::select('ID','event','time') %>% left_join(ts_features, by = 'ID')
-
-
-#Check if there is any character column, then delete them to make sure all data is numeric:
-nums <- unlist(lapply(data, is.character))  
-data[,nums]<-NULL
+data_tsfeatures <- data %>% dplyr::select('ID','event','time','AGE_Y15','MALE','RACEBLACK') %>%
+  left_join(ts_features, by = 'ID')
 
 
 
@@ -105,6 +101,9 @@ eval_times <- seq(1, endpt, by = 1)
 
 
 data <- data_tsfeatures
+#Check if there is any character column, then delete them to make sure all data is numeric:
+nums <- unlist(lapply(data, is.character))  
+data[,nums]<-NULL
 
 for (fold in 1:nfolds){
   # Training and fitting model:
@@ -117,7 +116,7 @@ for (fold in 1:nfolds){
   test_data$ID <- NULL
   
   
-  model_name <- 'rsf_ascvd_var_tsfeatures'
+  model_name <- 'rsf_ascvd_var_tsfeatures_rm_correlation'
   gc()
   main_dir <- paste0(work_dir, '/rdata_files')
   sub_dir <- paste0(model_name, '_fold_',fold)
@@ -145,7 +144,7 @@ for (fold in 1:nfolds){
                                       , newdata = test_data
                                       , times = eval_times
     )
-    prob_risk_test_with_ID <- cbind(test_id, test_data)
+    prob_risk_test_with_ID <- cbind(test_id, prob_risk_test)
     save(prob_risk_test_with_ID
          , file = paste0(saving.dir, '/prob_risk_test_set_with_ID.RData'))
     
@@ -166,7 +165,7 @@ for (fold in 1:nfolds){
                                        , newdata = trained_data
                                        , times = eval_times
     )
-    prob_risk_train_with_ID <- cbind(train_id, trained_data)
+    prob_risk_train_with_ID <- cbind(train_id, prob_risk_train)
     save(prob_risk_train_with_ID
          , file = paste0(saving.dir, '/prob_risk_train_set_with_ID.RData'))
     
@@ -198,9 +197,9 @@ for (fold in 1:nfolds){
 
 
 
-data_tsfeatures_plus_most_recent_by_y15 <- data_y15 %>% dplyr::select(-one_of('status','time','exam_year','time_te_in_yrs')) %>% 
-                                                                      mutate(AGE_Y15 = AGE_Y0 +15) %>% dplyr::select(-AGE_Y0) %>%
-                                                                      left_join(data_tsfeatures, by = 'ID') %>%
+data_tsfeatures_plus_most_recent_by_y15 <- data_y15_truncated_tte %>% 
+  mutate(AGE_Y15 = AGE_Y0 +15) %>% dplyr::select(-AGE_Y0) %>% 
+  left_join(ts_features, by = 'ID') %>%
   dplyr::select('ID','event','time',everything())
 data <- data_tsfeatures_plus_most_recent_by_y15
 
@@ -215,7 +214,7 @@ for (fold in 1:nfolds){
   test_data$ID <- NULL
   
   
-  model_name <- 'rsf_ascvd_var_tsfeatures_plus_data_y15'
+  model_name <- 'rsf_ascvd_var_tsfeatures_plus_data_y15_rm_correlation'
   gc()
   main_dir <- paste0(work_dir, '/rdata_files')
   sub_dir <- paste0(model_name, '_fold_',fold)
@@ -243,7 +242,7 @@ for (fold in 1:nfolds){
                                       , newdata = test_data
                                       , times = eval_times
     )
-    prob_risk_test_with_ID <- cbind(test_id, test_data)
+    prob_risk_test_with_ID <- cbind(test_id, prob_risk_test)
     save(prob_risk_test_with_ID
          , file = paste0(saving.dir, '/prob_risk_test_set_with_ID.RData'))
     
@@ -264,7 +263,7 @@ for (fold in 1:nfolds){
                                        , newdata = trained_data
                                        , times = eval_times
     )
-    prob_risk_train_with_ID <- cbind(train_id, trained_data)
+    prob_risk_train_with_ID <- cbind(train_id, prob_risk_train)
     save(prob_risk_train_with_ID
          , file = paste0(saving.dir, '/prob_risk_train_set_with_ID.RData'))
     

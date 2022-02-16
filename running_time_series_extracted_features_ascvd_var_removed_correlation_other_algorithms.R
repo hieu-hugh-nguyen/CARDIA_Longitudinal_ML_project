@@ -36,8 +36,8 @@ source(paste0(source_dir,'/code/snippet/normalize_var_importance.R'))
 
 # load extracted timeseries features:
 loading_dir = paste0(work_dir, '/csv_files')
-ts_features <- read.csv(paste0(work_dir,'/csv_files/tsfresh_features_filtered.csv'))
-ts_features <- ts_features %>% rename(ID = X)
+ts_features <- read.csv(paste0(work_dir,'/csv_files/tsfresh_features_drop_nonunique_drop_na_relevant_df_drop_correlated.csv'))
+ts_features <- ts_features %>% dplyr::rename(ID = X)
 
 
 
@@ -49,20 +49,20 @@ data_longi_long_for_analysis <- read.csv(paste0(work_dir,'/csv_files/data_longi_
 #
 subjects_in_cohort <- read.csv(paste0(work_dir,'/csv_files/subjects_in_final_analysis_cohort.csv'))
 
-data_longi_long_up_to_y15 <- data_longi_long_for_analysis %>% filter(exam_year <=15)
-data_longi_analysis_cohort <- data_longi_long_up_to_y15 %>% filter(ID %in% subjects_in_cohort[[1]])
+data_longi_long_up_to_y15 <- data_longi_long_for_analysis %>% dplyr::filter(exam_year <=15)
+data_longi_analysis_cohort <- data_longi_long_up_to_y15 %>% dplyr::filter(ID %in% subjects_in_cohort[[1]])
 
 # baseline data:
-# data_at_baseline <- data_longi_long_for_analysis %>% filter(!duplicated(ID, fromLast=FALSE)) 
-data_at_baseline <- data_longi_analysis_cohort %>% filter(ID %in% subjects_in_cohort[[1]]) %>% filter(exam_year == 0)
+# data_at_baseline <- data_longi_long_for_analysis %>% dplyr::filter(!duplicated(ID, fromLast=FALSE)) 
+data_at_baseline <- data_longi_analysis_cohort %>% dplyr::filter(ID %in% subjects_in_cohort[[1]]) %>% dplyr::filter(exam_year == 0)
 # most recent data at landmark time (y15):
-data_y15 <- data_longi_analysis_cohort %>% filter(ID %in% subjects_in_cohort[[1]]) %>% filter(exam_year == 15)
+data_y15 <- data_longi_analysis_cohort %>% dplyr::filter(ID %in% subjects_in_cohort[[1]]) %>% dplyr::filter(exam_year == 15)
 
 # truncate time to make start time at y15 (to avoid 15 years of immortal time):
 data_y15_truncated_tte <- data_y15 %>% 
   mutate(time_te_in_yrs = time_te_in_yrs -15) %>% 
-  dplyr::select(-time) %>% filter(time_te_in_yrs >0) %>%
-  rename(event = status) %>% rename(time = time_te_in_yrs) %>%
+  dplyr::select(-time) %>% dplyr::filter(time_te_in_yrs >0) %>%
+  dplyr::rename(event = status) %>% dplyr::rename(time = time_te_in_yrs) %>%
   dplyr::select(-exam_year)
 
 
@@ -74,12 +74,8 @@ data <- data %>% mutate(AGE_Y15 = AGE_Y0 +15) %>% dplyr::select(-AGE_Y0)
 
 # data with ts_features alone:
 
-data_tsfeatures <- data %>% dplyr::select('ID','event','time') %>% left_join(ts_features, by = 'ID')
-
-
-#Check if there is any character column, then delete them to make sure all data is numeric:
-nums <- unlist(lapply(data, is.character))  
-data[,nums]<-NULL
+data_tsfeatures <- data %>% dplyr::select('ID','event','time','AGE_Y15','MALE','RACEBLACK') %>%
+  left_join(ts_features, by = 'ID')
 
 
 
@@ -105,19 +101,29 @@ eval_times <- seq(1, endpt, by = 1)
 
 
 data <- data_tsfeatures
+#Check if there is any character column, then delete them to make sure all data is numeric:
+nums <- unlist(lapply(data, is.character))  
+data[,nums]<-NULL
 
+
+
+
+
+
+### cFOREST ###################################
 for (fold in 1:nfolds){
   # Training and fitting model:
+  ## fold =1 
   trainingid <- na.omit(c(trainingid_all[,fold], validationid_all[,fold]))
-  train_data <- data %>% filter(ID %in% trainingid)
-  test_data <- data %>% filter((ID %in% testingid_all[,fold])) 
+  train_data <- data %>% dplyr::filter(ID %in% trainingid)
+  test_data <- data %>% dplyr::filter((ID %in% testingid_all[,fold])) 
   train_id <- train_data$ID
   test_id <- test_data$ID
   train_data$ID <- NULL
   test_data$ID <- NULL
   
   
-  model_name <- 'rsf_ascvd_var_tsfeatures'
+  model_name <- 'cForest_ascvd_var_tsfeatures_rm_correlation'
   gc()
   main_dir <- paste0(work_dir, '/rdata_files')
   sub_dir <- paste0(model_name, '_fold_',fold)
@@ -125,10 +131,11 @@ for (fold in 1:nfolds){
   if(!dir.exists(file.path(main_dir, sub_dir))){
     createDir(main_dir, sub_dir)
   }
-  #set.seed(seed)
-  model <- running_rsf(train_data)
-  saving_dir <- file.path(main_dir, sub_dir)
+  set.seed(seed)
+  model = running_cForest(train_data)
+  saving_dir = file.path(main_dir, sub_dir)
   save(model, file = paste0(saving_dir,'/', model_name, '.RData'))
+  
   
   
   
@@ -138,14 +145,19 @@ for (fold in 1:nfolds){
   trained_data <- train_data
   trained_model <- model
   
+  
   tryCatch({
     
     # probability of having had the disease:
-    prob_risk_test <- predictRisk.rsf(trained_model
-                                      , newdata = test_data
-                                      , times = eval_times
+    prob_risk_test = predictRisk.cForest(trained_model
+                                         #  , traindata = trained_data
+                                         , newdata = test_data
+                                         , times = eval_times
     )
-    prob_risk_test_with_ID <- cbind(test_id, test_data)
+    
+    # probability of having had the disease:
+    
+    prob_risk_test_with_ID <- cbind(test_id, prob_risk_test)
     save(prob_risk_test_with_ID
          , file = paste0(saving.dir, '/prob_risk_test_set_with_ID.RData'))
     
@@ -162,28 +174,16 @@ for (fold in 1:nfolds){
     
     
     
-    prob_risk_train <- predictRisk.rsf(trained_model
+    prob_risk_train <- predictRisk.cForest(trained_model
                                        , newdata = trained_data
                                        , times = eval_times
     )
-    prob_risk_train_with_ID <- cbind(train_id, trained_data)
+    prob_risk_train_with_ID <- cbind(train_id, prob_risk_train)
     save(prob_risk_train_with_ID
          , file = paste0(saving.dir, '/prob_risk_train_set_with_ID.RData'))
     
   }, error=function(e){cat("ERROR :",conditionMessage(e), "\n")})
   
-  
-  ## VIMP:
-  max.subtree = max.subtree(model, conservative = F)
-  #save(max.subtree, file = paste(saving.dir, '/RF_maxtree.Rdata', sep = ''))
-  
-  # Get minimal depth of maximal subtree in terms of variable name, ascending order:
-  allvardepth = sort(max.subtree$order[, 1])
-  allvardepth.df = data.frame(Variable=names(allvardepth),MinDepthMaxSubtree=allvardepth,row.names = NULL)
-  
-  allvardepth.df$normalized_depth = normalize_var_imp(allvardepth.df$MinDepthMaxSubtree)
-  
-  write.csv(allvardepth.df, file = paste(saving_dir, '/depth_rank.csv', sep = ''),row.names=F)
   
 }
 
@@ -196,26 +196,19 @@ for (fold in 1:nfolds){
 
 
 
-
-
-data_tsfeatures_plus_most_recent_by_y15 <- data_y15 %>% dplyr::select(-one_of('status','time','exam_year','time_te_in_yrs')) %>% 
-                                                                      mutate(AGE_Y15 = AGE_Y0 +15) %>% dplyr::select(-AGE_Y0) %>%
-                                                                      left_join(data_tsfeatures, by = 'ID') %>%
-  dplyr::select('ID','event','time',everything())
-data <- data_tsfeatures_plus_most_recent_by_y15
-
+### LASSO-COX ###################################
 for (fold in 1:nfolds){
   # Training and fitting model:
   trainingid <- na.omit(c(trainingid_all[,fold], validationid_all[,fold]))
-  train_data <- data %>% filter(ID %in% trainingid)
-  test_data <- data %>% filter((ID %in% testingid_all[,fold])) 
+  train_data <- data %>% dplyr::filter(ID %in% trainingid)
+  test_data <- data %>% dplyr::filter((ID %in% testingid_all[,fold])) 
   train_id <- train_data$ID
   test_id <- test_data$ID
   train_data$ID <- NULL
   test_data$ID <- NULL
   
   
-  model_name <- 'rsf_ascvd_var_tsfeatures_plus_data_y15'
+  model_name <- 'lasso_ascvd_var_tsfeatures_rm_correlation'
   gc()
   main_dir <- paste0(work_dir, '/rdata_files')
   sub_dir <- paste0(model_name, '_fold_',fold)
@@ -223,10 +216,11 @@ for (fold in 1:nfolds){
   if(!dir.exists(file.path(main_dir, sub_dir))){
     createDir(main_dir, sub_dir)
   }
-  #set.seed(seed)
-  model <- running_rsf(train_data)
-  saving_dir <- file.path(main_dir, sub_dir)
+  set.seed(seed)
+  model = running_lasso(train_data)
+  saving_dir = file.path(main_dir, sub_dir)
   save(model, file = paste0(saving_dir,'/', model_name, '.RData'))
+  
   
   
   
@@ -239,11 +233,15 @@ for (fold in 1:nfolds){
   tryCatch({
     
     # probability of having had the disease:
-    prob_risk_test <- predictRisk.rsf(trained_model
-                                      , newdata = test_data
-                                      , times = eval_times
+    prob_risk_test = predictRisk.cox(trained_model
+                                     #  , traindata = trained_data
+                                     , newdata = test_data
+                                     , times = eval_times
     )
-    prob_risk_test_with_ID <- cbind(test_id, test_data)
+    
+    # probability of having had the disease:
+    
+    prob_risk_test_with_ID <- cbind(test_id, prob_risk_test)
     save(prob_risk_test_with_ID
          , file = paste0(saving.dir, '/prob_risk_test_set_with_ID.RData'))
     
@@ -260,29 +258,20 @@ for (fold in 1:nfolds){
     
     
     
-    prob_risk_train <- predictRisk.rsf(trained_model
+    prob_risk_train <- predictRisk.cox(trained_model
                                        , newdata = trained_data
                                        , times = eval_times
     )
-    prob_risk_train_with_ID <- cbind(train_id, trained_data)
+    prob_risk_train_with_ID <- cbind(train_id, prob_risk_train)
     save(prob_risk_train_with_ID
          , file = paste0(saving.dir, '/prob_risk_train_set_with_ID.RData'))
     
   }, error=function(e){cat("ERROR :",conditionMessage(e), "\n")})
   
   
-  # VIMP:
-  
-  
-  max.subtree = max.subtree(model, conservative = F)
-  #save(max.subtree, file = paste(saving.dir, '/RF_maxtree.Rdata', sep = ''))
-  
-  # Get minimal depth of maximal subtree in terms of variable name, ascending order:
-  allvardepth = sort(max.subtree$order[, 1])
-  allvardepth.df = data.frame(Variable=names(allvardepth),MinDepthMaxSubtree=allvardepth,row.names = NULL)
-  
-  allvardepth.df$normalized_depth = normalize_var_imp(allvardepth.df$MinDepthMaxSubtree)
-  
-  write.csv(allvardepth.df, file = paste(saving_dir, '/depth_rank.csv', sep = ''),row.names=F)
-  
 }
+
+
+
+
+
