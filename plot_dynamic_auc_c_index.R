@@ -146,6 +146,10 @@ dynamic_deephit_untuned_auc_df_v2 <- auc_df_from_performance_testset('dynamic_de
 
 jmbayes_auc_df_v2 <- auc_df_from_performance_testset('jmbayes_ascvd_var_y15')
 
+cForest_y15_auc_df <- auc_df_from_performance_testset('cForest_ascvd_var_y15')
+
+cox_y15_auc_df_exp <- auc_df_from_performance_testset('cox_ascvd_var_y15_exp')
+
 
 ### ASCVD risk score:  ######
 fold =1
@@ -180,7 +184,10 @@ df_for_plot = data.frame(eval_times
                          #,dynamic_deephit_untuned_auc_df_v2$median
                          
                          ,cox_y15_auc_df$mean
-                         #,rsf_y15_auc_df$median
+                         ,cox_y15_auc_df_exp$median
+                         ,rsf_y15_auc_df$median
+                         ,cForest_y15_auc_df$median
+                        
               
                          
                          
@@ -210,7 +217,9 @@ names(df_for_plot2) = c('eval_times'
                         ,'cForest on TS-derived features' #'and Static Y15 Data'
                         #,'Dynamic-Deephit'
                         ,'Cox Y15'
-                        #,'RSF Y15'
+                        ,'COX Y15_2'
+                        ,'RSF Y15'
+                        ,'cForest Y15'
                         #,'LASSO-Cox on TS-derived features' # and Static Y15 Data'
                         #,'Joint Modeling Bayesian'
                       

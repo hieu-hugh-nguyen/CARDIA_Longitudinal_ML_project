@@ -77,7 +77,7 @@ data <- data %>% mutate(AGE_Y15 = AGE_Y0 +15) %>% dplyr::select(-AGE_Y0)
 data_tsfeatures <- data %>% dplyr::select('ID','event','time','AGE_Y15','MALE','RACEBLACK') %>%
   left_join(ts_features, by = 'ID')
 
-
+# write.csv(data_tsfeatures, file = paste0(work_dir,'/csv_files/data_for_training_tsfeatures_models.csv'), row.names= F)
 
 # load training IDs:
 trainingid_all <- read.csv(paste0(work_dir,'/csv_files/all_training_set_ID.csv'))

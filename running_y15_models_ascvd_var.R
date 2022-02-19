@@ -96,8 +96,8 @@ eval_times <- seq(1, endpt, by = 1)
 
 ### COX-PH MODEL ###################################
 
-nfolds = 25
-for (fold in 11:nfolds){
+nfolds = 10
+for (fold in 1:nfolds){
   # Training and fitting model:
   # fold = 11
   trainingid <- na.omit(c(trainingid_all[,fold], validationid_all[,fold]))
@@ -109,7 +109,7 @@ for (fold in 11:nfolds){
   test_data$ID <- NULL
   
   
-  model_name <- 'cox_ascvd_var_y15'
+  model_name <- 'cox_ascvd_var_y15_exp'
   gc()
   main_dir <- paste0(work_dir, '/rdata_files')
   sub_dir <- paste0(model_name, '_fold_',fold)
@@ -118,7 +118,9 @@ for (fold in 11:nfolds){
     createDir(main_dir, sub_dir)
   }
   set.seed(seed)
-  model <- running_coxph(train_data)
+  # model <- running_coxph(train_data)
+  model <- coxph(Surv(time,event) ~MALE+RACEBLACK+CHOL+DIAB+HBM+HDL+SBP+SMKNW+AGE_Y15
+                 , data = train_data, singular.ok = T, x=TRUE)
   saving_dir <- file.path(main_dir, sub_dir)
   save(model, file = paste0(saving_dir,'/', model_name, '.RData'))
   
@@ -231,6 +233,84 @@ for (fold in 1:nfolds){
     prob_risk_train <- predictRisk.rsf(trained_model
                                       , newdata = trained_data
                                       , times = eval_times
+    )
+    prob_risk_train_with_ID <- cbind(train_id, prob_risk_train)
+    save(prob_risk_train_with_ID
+         , file = paste0(saving.dir, '/prob_risk_train_set_with_ID.RData'))
+    
+  }, error=function(e){cat("ERROR :",conditionMessage(e), "\n")})
+  
+  
+}
+
+
+
+
+
+
+
+
+
+### cFOREST MODEL ###################################
+for (fold in 1:nfolds){
+  # Training and fitting model:
+  trainingid <- na.omit(c(trainingid_all[,fold], validationid_all[,fold]))
+  train_data <- data %>% filter(ID %in% trainingid)
+  test_data <- data %>% filter((ID %in% testingid_all[,fold])) 
+  train_id <- train_data$ID
+  test_id <- test_data$ID
+  train_data$ID <- NULL
+  test_data$ID <- NULL
+  
+  
+  model_name <- 'cForest_ascvd_var_y15'
+  gc()
+  main_dir <- paste0(work_dir, '/rdata_files')
+  sub_dir <- paste0(model_name, '_fold_',fold)
+  
+  if(!dir.exists(file.path(main_dir, sub_dir))){
+    createDir(main_dir, sub_dir)
+  }
+  set.seed(seed)
+  model <- running_cForest(train_data)
+  saving_dir <- file.path(main_dir, sub_dir)
+  save(model, file = paste0(saving_dir,'/', model_name, '.RData'))
+  
+  
+  
+  # Test set performance: ###################################################################
+  loading.dir <- paste0(work_dir, '/rdata_files/', model_name, '_fold_', fold)
+  saving.dir <- loading.dir
+  trained_data <- train_data
+  trained_model <- model
+  
+  tryCatch({
+    
+    # probability of having had the disease:
+    prob_risk_test <- predictRisk.cForest(trained_model
+                                      , newdata = test_data
+                                      , times = eval_times
+    )
+    prob_risk_test_with_ID <- cbind(test_id, prob_risk_test)
+    save(prob_risk_test_with_ID
+         , file = paste0(saving.dir, '/prob_risk_test_set_with_ID.RData'))
+    
+    
+    
+    prob_risk_test[is.na(prob_risk_test)] = 0
+    performance_testset = eval_performance2(prob.risk.test.set = prob_risk_test
+                                            , test.data = test_data
+                                            , trained.data = trained_data
+                                            , eval.times = eval_times
+    )
+    save(performance_testset
+         , file = paste0(saving.dir, '/performance_testset.RData'))
+    
+    
+    
+    prob_risk_train <- predictRisk.rsf(trained_model
+                                       , newdata = trained_data
+                                       , times = eval_times
     )
     prob_risk_train_with_ID <- cbind(train_id, prob_risk_train)
     save(prob_risk_train_with_ID

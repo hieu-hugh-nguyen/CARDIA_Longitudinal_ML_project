@@ -132,12 +132,6 @@ for (fold in 1:nfolds){
   
   save(performance_testset_4
        , file = paste0(saving.dir, '/performance_testset_updated_F1.RData'))
-
-  # roc_df_curr_time <- performance_testset$roc[[17]][['ROC']]$plotframe
-  # roc_df_curr_time$youden_index <-  roc_df_curr_time$TPR + 1- roc_df_curr_time$FPR - 1
-  # roc_df_curr_time_na_rm <- 
-  # best_cutoff <- roc_df_curr_time$risk[which(roc_df_curr_time$youden_index == max(na.omit(roc_df_curr_time$youden_index)))][1]
-  
   
 }  
 
