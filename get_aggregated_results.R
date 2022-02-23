@@ -14,26 +14,40 @@ endpt = 17
 eval_times = seq(1,endpt,1)
 
 
-performance.all = list()
 
 
 model_list = c(
   ## model_name = 
-  'rsf_ascvd_var_tsfeatures_plus_data_y15_rm_correlation'
-  , 'cForest_ascvd_var_tsfeatures_rm_correlation'
-  , 'lasso_ascvd_var_tsfeatures_rm_correlation'
-  , 'dynamic_deephit_ascvd_var_y15'
-  , 'jmbayes_ascvd_var_y15'
-  , 'rsf_ascvd_var_y15'
-  , 'cox_ascvd_var_y15'
-  , 'rsf_ascvd_var_baseline_no_truncate'
-  , 'cox_ascvd_var_baseline_no_truncate'
+
+  # , 'rsf_expanded_var_y15' 
+  # , 'cForest_expanded_var_y15'
+  # , 'cox_expanded_var_y15'
+  # , 'lasso_expanded_var_y15'
+  
+   'rsf_expanded_var_baseline_no_truncate'
+   , 'cox_expanded_var_baseline_no_truncate'
+   , 'lasso_expanded_var_baseline_no_truncate'
+   
+  
+  # 'rsf_ascvd_var_tsfeatures_plus_data_y15_rm_correlation'
+  # , 'cForest_ascvd_var_tsfeatures_rm_correlation'
+  # , 'lasso_ascvd_var_tsfeatures_rm_correlation'
+  # , 'dynamic_deephit_ascvd_var_y15'
+  # , 'jmbayes_ascvd_var_y15'
+  # , 'rsf_ascvd_var_y15'
+  # , 'cox_ascvd_var_y15'
+  # , 'rsf_ascvd_var_baseline_no_truncate'
+  # , 'cox_ascvd_var_baseline_no_truncate'
    )
 
 agg_perf_and_ci <- function(model_name, ndigits = 3){
   for(fold in 1:nfold){
+    ## fold = 1
     loading.dir = paste0(work_dir, '/rdata_files/',model_name,'_fold_', fold)
     
+    if (fold ==1){
+      performance.all = list()
+    }  
     tryCatch({
     performance = list((get(load(paste0(loading.dir,'/performance_testset.RData')))))
     performance.all = append(performance.all, performance)
@@ -44,7 +58,11 @@ agg_perf_and_ci <- function(model_name, ndigits = 3){
   performance.report.static = list()
   performance.report.static = within(performance.report.static,
     {last.cindex.all = c();last.brier.all = c(); uno.c.all = c()
-    ; iauc.uno.all = c();last.auc.all = c(); 
+    ; iauc.uno.all = c();last.auc.all = c();
+    ; last.sens.all = c(); last.spec.all = c();
+    ; last.ppv.all = c(); last.npv.all = c();
+    ; last.f1.all = c(); last.mcc.all = c();
+    
     }
   )
   performance.report.dynamic= list()
@@ -64,7 +82,14 @@ agg_perf_and_ci <- function(model_name, ndigits = 3){
       uno.c.all = append(uno.c.all, unlist(performance.all[[fold]]$uno.c))
       iauc.uno.all = append(iauc.uno.all, unlist(performance.all[[fold]]$iauc.uno))
       last.auc.all = append(last.auc.all, unlist(performance.all[[fold]]$auc[length(performance.all[[fold]]$auc)]))
-      #iauc.cd.all = append(iauc.cd.all, unlist(performance.all[[fold]]$iauc.cd))
+      last.sens.all = append(last.sens.all, unlist(performance.all[[fold]]$last.sens))
+      last.spec.all = append(last.spec.all, unlist(performance.all[[fold]]$last.spec))
+      last.ppv.all = append(last.ppv.all, unlist(performance.all[[fold]]$last.ppv))
+      last.npv.all = append(last.npv.all, unlist(performance.all[[fold]]$last.npv))
+      last.f1.all = append(last.f1.all, unlist(performance.all[[fold]]$last.f1))
+      last.mcc.all = append(last.mcc.all, unlist(performance.all[[fold]]$last.mcc))
+      
+      
     })
     performance.report.dynamic = within(performance.report.dynamic, {
       dynamic.auc.all = rbind(dynamic.auc.all, performance.all[[fold]]$auc)
@@ -101,7 +126,7 @@ agg_perf_and_ci <- function(model_name, ndigits = 3){
   
   
   ### Get CI of the model performance in 4 metrics: ################### 
-  ### last C-index, AUC, iAUC, and Brier Score
+  ### last C-index, AUC, iAUC.uno, and Brier Score
   
   require(dplyr)
   loading.dir = paste0(work_dir,'/rdata_files')
@@ -110,10 +135,15 @@ agg_perf_and_ci <- function(model_name, ndigits = 3){
   model.auc = bootstrap_ci(na.omit(performance.report.static$last.auc.all))
   model.auc.uno = bootstrap_ci(na.omit(performance.report.static$uno.c.all))
   model.brier = bootstrap_ci(na.omit(performance.report.static$last.brier.all))
-  model.iauc = bootstrap_ci(na.omit(performance.report.static$iauc.uno.all))
-  # model.iauc = bootstrap_ci(na.omit(performance.report.static$iauc.uno.all))
+  model.iauc.uno = bootstrap_ci(na.omit(performance.report.static$iauc.uno.all))
+  model.sens = bootstrap_ci(na.omit(performance.report.static$last.sens.all))
+  model.spec = bootstrap_ci(na.omit(performance.report.static$last.spec.all))
+  model.ppv = bootstrap_ci(na.omit(performance.report.static$last.ppv.all))
+  model.npv = bootstrap_ci(na.omit(performance.report.static$last.npv.all))
+  model.f1 = bootstrap_ci(na.omit(performance.report.static$last.f1.all))
+  model.mcc = bootstrap_ci(na.omit(performance.report.static$last.mcc.all))
   
-  
+
   
 
   print_value <- function(ci_output, digits = 2){
@@ -123,18 +153,26 @@ agg_perf_and_ci <- function(model_name, ndigits = 3){
   }
   
   
-  ci_df = data.frame(model.iauc, model.cindex, model.auc, model.brier, model.auc.uno)
-  ci_written_out = c(print_value(model.iauc, digits =ndigits)
+  ci_df = data.frame(model.iauc.uno, model.cindex, model.auc, model.brier, model.auc.uno
+                     , model.sens, model.spec, model.ppv, model.npv, model.f1, model.mcc)
+  ci_written_out = c(print_value(model.iauc.uno, digits =ndigits)
                   , print_value(model.cindex, digits =ndigits)
                   , print_value(model.auc, digits =ndigits)
                   , print_value(model.brier, digits =ndigits)
                   , print_value(model.auc.uno, digits =ndigits)
+                  , print_value(model.sens, digits =ndigits)
+                  , print_value(model.spec, digits =ndigits)
+                  , print_value(model.ppv, digits =ndigits)
+                  , print_value(model.npv, digits =ndigits)
+                  , print_value(model.f1, digits =ndigits)
+                  , print_value(model.mcc, digits =ndigits)
                   )
   
   ci_df_written_out = rbind(ci_df, ci_written_out)
   
   print(paste0('Performance of model ', model_name,' :'))
   print(ci_df_written_out %>% dplyr::slice(4))
+  cat('\n')
   
   saving.dir = paste0(work_dir,'/rdata_files')
   write.csv(ci_df_written_out

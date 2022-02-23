@@ -8,7 +8,7 @@ work_dir = 'U:/Hieu/CARDIA_longi_project'
 setwd(work_dir)
 
 # load libraries:
-list.of.packages <- c('ggplot2', 'dplyr', 'tibble', 'parallelMap','parallel')
+list.of.packages <- c('ggplot2', 'dplyr', 'tibble', 'parallelMap','parallel', 'readxl', 'tidyr')
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
 lapply(list.of.packages, require, character.only = T)
@@ -17,26 +17,60 @@ parallel::detectCores()
 parallelMap::parallelStartSocket(5)
 
 # source snippet functions:
-source_dir <- 'U:/Hieu/CARDIA_project/CARDIA_project'
-source(paste0(source_dir,'/Git/code/snippet/createDir.R'))
-source(paste0(source_dir,'/Git/code/snippet/subsetDataTopnVar.R'))
+source_dir <- paste0(work_dir, '/code/git_code/snippet')
+source(paste0(source_dir,'/createDir.R'))
+source(paste0(source_dir,'/subsetDataTopnVar.R'))
 
 
-var_dict <- read.csv(paste0(work_dir,'/csv_files/','longi_data_avalability_dictionary_ascvd_risk_factors2.csv'))
 
 
+# load var dictionary:
+
+var_dict_bubble_format <- read_excel(paste0(work_dir,'/csv_files/','longi_data_avalability_dup_rm_bubble_format3_corrected.xlsx'))
+
+longi_var_to_be_used <- var_dict_bubble_format %>% dplyr::filter(Include == 1) %>% dplyr::select(varname_longi) %>% unlist() %>% as.character() 
 
 var_dict_all_var <- read.csv(paste0(work_dir,'/csv_files/','longi_data_avalability_dictionary.csv'))
 
+var_dict_all_var[nrow(var_dict_all_var) + 1,] <- c(0, 'HBNOW', NA, 'A08BPMED', 'EVER TAKEN HIGH BP MEDICATION', NA, 0, 'a4f08')
+
+# var_dict_ascvd <- read.csv(paste0(work_dir,'/csv_files/','longi_data_avalability_dictionary_ascvd_risk_factors2.csv'))
 
 
-exam_years <- c(0, 2, 5, 7, 10, 15, 20, 25, 30)
+var_to_be_rm <- c('A21ASMA', 'D21ASMA','E53BEER', 'E53WGT', 'C35CHOL', 'D06CHOL', 'DV6CHOL','E05DIAB','E5ADIAB'
+                  , 'C36LIFE', 'E36LIFE', 'F36LIFE', 'E53WINE'
+                  ,'SEX', 'A13SEX', 'B12SEX', 'C12SEX', 'C13SEX', 'E12SEX', 'E53SEX')
+
+`%notin%` <- Negate(`%in%`)
+
+var_dict_to_be_used <- var_dict_all_var %>% dplyr::filter(varname_longi %in% longi_var_to_be_used) %>% 
+  mutate(exam_year = as.numeric(exam_year)) %>% 
+  dplyr::filter(exam_year <= 15) %>% 
+  dplyr::filter(Variable.Name %notin% var_to_be_rm) %>% # remove unwanted vars (same longi name (shortened) but meant differently for each exam)
+  dplyr::filter(!duplicated(Variable.Name, fromLast=FALSE)) %>%
+  rbind(var_dict_all_var %>% dplyr::filter(Variable.Name %in%(c('A02DBP', 'A02SBP')))) %>%
+  mutate(varname_longi = ifelse(varname_longi == 'AVGDI', 'DBP', varname_longi)) %>%
+  mutate(varname_longi = ifelse(varname_longi == 'AVGSY', 'SBP', varname_longi))
+
+
+
+
+
+
+
+exam_years <- c(0, 2, 5, 7, 10, 15)
 
 
 for (i in 1:length(exam_years)){
+  # i = 1
+  
+  vars_oi <- var_dict_to_be_used %>% filter(exam_year == exam_years[i]) %>% dplyr::pull(Variable.Name)
+  if(i == 1){
+    vars_oi <- c(vars_oi,'A08BPMED')
+  }
   
   featurespace <-read.csv(paste0(work_dir,'/csv_files/Y', exam_years[i], '/Y', exam_years[i],'_unimputed_featurespace.csv'))
-  vars_oi <- var_dict %>% filter(exam_year == exam_years[i]) %>% dplyr::pull(Variable.Name)
+  
   featurespace <- featurespace[!is.na(featurespace$SHORT_ID),]
   
   featurespace_vars_oi <- featurespace %>% dplyr::select(one_of(c('ID',vars_oi)))
@@ -52,15 +86,16 @@ for (i in 1:length(exam_years)){
   }
 }
 
+
 # change varname variables in the dictionary: add exam year to the name in the varying variables:
-var_dict <- var_dict %>% mutate(varname_longi_exam_year = case_when(varname_longi %in% c('RACE1','SEX','AGE1') ~ varname_longi
+var_dict_add_exam_year_to_var_name <- var_dict_to_be_used %>% mutate(varname_longi_exam_year = case_when(varname_longi %in% c('RACE1','SEX','AGE1') ~ varname_longi
                                                                     ,TRUE ~ paste0(varname_longi,'_',exam_year))) 
 
 # change varname variables in the data sheet:
 names_featurespace_longi <- names(featurespace_longi)
 for (i in 1:length(names_featurespace_longi)){
-  if (names_featurespace_longi[i] %in% var_dict$Variable.Name){
-    names_featurespace_longi[i] <- var_dict$varname_longi_exam_year[var_dict$Variable.Name == names_featurespace_longi[i]]
+  if (names_featurespace_longi[i] %in% var_dict_add_exam_year_to_var_name$Variable.Name){
+    names_featurespace_longi[i] <- var_dict_add_exam_year_to_var_name$varname_longi_exam_year[var_dict_add_exam_year_to_var_name$Variable.Name == names_featurespace_longi[i]]
   }
 }
 
@@ -90,16 +125,27 @@ data_longi_wide <- outcome_data %>% left_join(featurespace_longi_change_varname,
 
 
 
-
 # convert data from wide to long format:
 
-time_independent_var <- c('ID', 'status','time', 'RACEBLACK', 'MALE','AGE1')
-varying_var <- names(data_longi_wide)[!(names(data_longi_wide) %in% time_independent_var)]
 
-data_longi_long = reshape(data_longi_wide, direction = 'long', idvar = 'ID', sep = "_"
+# Missing: GLU_2, GLU_5, LIVER_5, MENTL_5, DFPAY_5, ED_15
+
+data_longi_wide_fill_in_missing_exam_features <- data_longi_wide %>%
+  mutate(GLU_2 = GLU_0) %>%
+  mutate(GLU_5 = GLU_7) %>%
+  mutate(LIVER_5 = LIVER_2) %>%
+  mutate(MENTL_5 = MENTL_2) %>%
+  mutate(DFPAY_5 = DFPAY_2) %>%
+  mutate(ED_15 = ED_10)
+  
+time_independent_var <- c('ID', 'status','time', 'RACEBLACK', 'MALE','AGE1')
+varying_var <- names(data_longi_wide_fill_in_missing_exam_features)[!(names(data_longi_wide_fill_in_missing_exam_features) %in% time_independent_var)]
+
+
+data_longi_long = reshape(data_longi_wide_fill_in_missing_exam_features, direction = 'long', idvar = 'ID', sep = "_"
                                   , varying= varying_var 
                                   , timevar = 'exam_year') %>% 
-  arrange(ID, exam_year) %>% rename(AGE_Y0 = AGE1) %>%
+  arrange(ID, exam_year) %>% rename(AGE_Y0 = AGE1) %>% rename(HBM = HBNOW) %>%
   # mutate(exam_year_in_days = exam_year*365.25) %>%
   mutate(time_te_in_yrs = time/365.25) %>%
   dplyr::select(c('ID','status','time','exam_year','time_te_in_yrs',everything())) 
@@ -107,46 +153,139 @@ data_longi_long = reshape(data_longi_wide, direction = 'long', idvar = 'ID', sep
 
 
 
+# Recode categorical variables: ########################################################################################################
+
+
+# missing_table <- (5115-colSums(is.na(data_longi_wide))) %>% as.data.frame()
+
+# recode some categorical variables:
+# for example, cancer, 1=NO, 2=YES, 8= note sure/treated as NO, missing = NO will be changed to (0 = NO, 1= YES)
+
+## var_to_be_recoded <- var_dict_bubble_format$varname_longi[var_dict_bubble_format$Fill_NA_with == 0] %>% na.omit() %>% as.character()
+
+var_to_be_recoded <- c("ASMA",  "CANCR", "DIAB",  "GALL",  "HEART", "KIDNY", "LIVER", "HRTAK", "SMKNW", "MENTL", "HBM")
+
+categorical_recode_func <- function(x, na.rm = FALSE){
+  x = ifelse(x == 1, 0, x)
+  x = ifelse(x == 8, 0, x)
+  x = ifelse(x == 2, 1, x)
+  return (x)
+}
+
+data_longi_long_recode <- data_longi_long %>% mutate_at(var_to_be_recoded, categorical_recode_func)
+
+## the above function takes care of the manual recoding below:
+# data_longi_long_recode <- data_longi_long %>% mutate(HBM = case_when(HBM  == 1 ~ 0
+#                                                               ,HBM == 2 ~ 1
+#                                                              ,HBM == 8 ~ 0
+#                                                              )) %>% 
+#                                       mutate(DIAB = case_when(DIAB  == 1 ~ 0
+#                                                              ,DIAB == 2 ~ 1
+#                                                              ,DIAB == 8 ~ 0
+#                                                              #,is.na(DIAB) ~ 0
+#                                                              )) %>% 
+#                                       mutate(SMKNW = case_when(SMKNW  == 1 ~ 0
+#                                                               ,SMKNW == 2 ~ 1
+#                                                               ,SMKNW == 8 ~ 0
+#                                                              ))
+
+
+# recode 8 and 9 in DFPAY to be NA:
+data_longi_long_recode$DFPAY <- ifelse(data_longi_long_recode$DFPAY %in% c(8,9), NA, data_longi_long_recode$DFPAY)
+
 # Deal with missing data: ########################################################################################################
 
 
-missing_table <- (5115-colSums(is.na(data_longi_wide))) %>% as.data.frame()
-
-# recode some variables:
-# for variable <currently taking high-blood pressure meds, 1=NO, 2=YES, 8= note sure/treated as NO, missing = NO
-data_longi_long <- data_longi_long %>% mutate(HBM = case_when(HBM  == 1 ~ 0
-                                                             ,HBM == 2 ~ 1
-                                                             ,HBM == 8 ~ 1
-                                                             )) %>% 
-                                      mutate(DIAB = case_when(DIAB  == 1 ~ 0
-                                                             ,DIAB == 2 ~ 1
-                                                             ,DIAB == 8 ~ 1
-                                                             #,is.na(DIAB) ~ 0
-                                                             )) %>% 
-                                      mutate(SMKNW = case_when(SMKNW  == 1 ~ 0
-                                                              ,SMKNW == 2 ~ 1
-                                                              ,SMKNW == 8 ~ 1
-                                               
-
 # Remove completely missing years (when all varying measurements in one exam year are missing):
-data_longi_long_varying_var <- data_longi_long %>% dplyr::select(-one_of(c(time_independent_var, 'exam_year', 'time_te_in_yrs','AGE_Y0')))
+data_longi_long_varying_var <- data_longi_long_recode %>% dplyr::select(-one_of(c(time_independent_var, 'exam_year', 'time_te_in_yrs','AGE_Y0')))
 completely_missing_rows <- which(rowSums(is.na(data_longi_long_varying_var)) == ncol(data_longi_long_varying_var))
-data_longi_long_na_rm <- data_longi_long %>% slice(-completely_missing_rows)
+data_longi_long_na_rm_complete_missing <- data_longi_long_recode %>% slice(-completely_missing_rows)
+
+# fill in missing data for some variables:
+var_to_be_NA_filled <- var_dict_bubble_format %>% dplyr::filter(Include == 1) %>% 
+  dplyr::filter(Fill_NA_with == 0) %>% dplyr::select(varname_longi) %>% unlist() %>% na.omit() %>% as.character() %>% c('HBM')
 
 
-# treat missing HBM status as not taking HBM, because participant can only see the question for HBM if they indicates they have hypertension
-data_longi_long_na_rm$HBM[data_longi_long_na_rm$HBM %>% is.na()] <- 0 
+data_longi_long_na_fill <- data_longi_long_na_rm_complete_missing %>%
+  mutate_at(var_to_be_NA_filled, ~tidyr::replace_na(., 0))
 
-# assume that missing SMKNW status means the person is not smoking regularly (need to check again)
-data_longi_long_na_rm$SMKNW[data_longi_long_na_rm$SMKNW %>% is.na()] <- 0 
-               #,is.na(DIAB) ~ 0
-                                      )) 
-data_longi_long_complete_cases <- data_longi_long_na_rm %>% na.omit() 
-# 5109/5114 have completed cases
 
-data_longi_long_for_analysis <- data_longi_long_complete_cases %>% filter(exam_year<time_te_in_yrs)
 
-write.csv(data_longi_long_for_analysis, file = paste0(work_dir,'/csv_files/data_longi_long_format_ascvd_risk_factors.csv'),row.names = F)
+
+
+
+## Filtering: only include subjects in the ASCVD-only cohort:
+
+subjects_in_ascvd_cohort <- read.csv(paste0(work_dir,'/csv_files/subjects_in_final_analysis_cohort.csv'))
+data_longi_long_expanded_variables_ascvd_cohort <- data_longi_long_na_fill %>% 
+  filter(ID %in% subjects_in_ascvd_cohort$x) # %>% filter(HRTAK!= 1)
+# count_N_subjects_and_instances(data_longi_long_expanded_variables_ascvd_cohort)
+# count_N_subjects_and_instances(data_longi_long_expanded_variables_ascvd_cohort_1)
+
+# data_longi_long_na_fill %>% filter(ID %in% subjects_in_ascvd_cohort$x) %>% filter(HRTAK== 1) %>% View()
+
+# Remove the whole exam data with missing values:
+
+count_N_subjects_and_instances <- function(df){
+  print(paste0('N unique subjects: ',df$ID %>% unique() %>% length()))
+  print(paste0('N instances: ',df$ID %>% length()))
+}
+
+var_must_be_non_missing_ascvd <- c('SBP', 'HDL', 'CHOL')
+data_longi_long_expanded_variables_ascvd_cohort_complete_ascvd_vars <- data_longi_long_expanded_variables_ascvd_cohort %>% 
+  drop_na(all_of(var_must_be_non_missing_ascvd))
+count_N_subjects_and_instances(data_longi_long_expanded_variables_ascvd_cohort_complete_ascvd_vars)
+
+
+
+var_must_be_non_missing_expanded_1 <- c('DBP', 'BMI')
+data_longi_long_expanded_variables_ascvd_cohort_complete_essential_vars_1 <- data_longi_long_expanded_variables_ascvd_cohort_complete_ascvd_vars %>% 
+  drop_na(all_of(var_must_be_non_missing_expanded_1))
+count_N_subjects_and_instances(data_longi_long_expanded_variables_ascvd_cohort_complete_essential_vars_1)
+
+
+
+var_must_be_non_missing_expanded_2 <- c('NTRIG', 'LDL', 'PULSE', 'WST1', 'PSTYR', 'ARMCI')
+data_longi_long_expanded_variables_ascvd_cohort_complete_essential_vars_1_2 <- data_longi_long_expanded_variables_ascvd_cohort_complete_essential_vars_1 %>% 
+  drop_na(all_of(var_must_be_non_missing_expanded_2))
+count_N_subjects_and_instances(data_longi_long_expanded_variables_ascvd_cohort_complete_essential_vars_1_2)
+
+
+var_must_be_non_missing_expanded_2 <- c('NTRIG', 'LDL', 'PULSE', 'WST1', 'PSTYR', 'ARMCI', 'ED')
+data_longi_long_expanded_variables_ascvd_cohort_complete_essential_vars_1_2 <- data_longi_long_expanded_variables_ascvd_cohort_complete_essential_vars_1 %>% 
+  drop_na(all_of(var_must_be_non_missing_expanded_2))
+count_N_subjects_and_instances(data_longi_long_expanded_variables_ascvd_cohort_complete_essential_vars_1_2)
+
+
+var_must_be_non_missing_expanded_3 <- c('GLU', 'DFPAY')
+data_longi_long_expanded_variables_ascvd_cohort_complete_essential_vars_1_2_3 <- data_longi_long_expanded_variables_ascvd_cohort_complete_essential_vars_1_2 %>% 
+  drop_na(all_of(var_must_be_non_missing_expanded_3))
+count_N_subjects_and_instances(data_longi_long_expanded_variables_ascvd_cohort_complete_essential_vars_1_2_3)
+
+
+
+
+# data_at_least_one_NA <- 
+#   data_longi_long_expanded_variables_ascvd_cohort_complete_essential_vars[!complete.cases(data_longi_long_expanded_variables_ascvd_cohort_complete_essential_vars), ]
+# # data_at_least_one_NA$ID %>% unique() %>% length()
+
+na_count_df <-data.frame(na_count = sapply(data_longi_long_expanded_variables_ascvd_cohort_complete_essential_vars_1_2, function(y) sum(length(which(is.na(y))))))
+na_count_df$var_name <- rownames(na_count_df)
+
+# since GLU are not available in EXAM Y2 and Y5, and DFPAY is not avai in Y5, remove them:
+
+data_longi_long_expanded_variables_final <- data_longi_long_expanded_variables_ascvd_cohort_complete_essential_vars_1_2 %>%
+  dplyr::select(-one_of(c('GLU', 'DFPAY', 'HEART', 'HRTAK'))) %>% rename(WST = WST1)
+dplyr::select(-one_of(c('GLU', 'DFPAY', 'HEART', 'HRTAK'))) %>% rename(WST = WST1)
+
+write.csv(data_longi_long_expanded_variables_final, file = paste0(work_dir,'/csv_files/data_longi_long_format_expanded_variables_removed_missing_data.csv'),row.names = F)
+
+
+data_longi_long_expanded_variables_final_with_missing_data <- data_longi_long_expanded_variables_ascvd_cohort %>%
+  dplyr::select(-one_of(c('GLU', 'DFPAY', 'HEART', 'HRTAK'))) %>% rename(WST = WST1)
+count_N_subjects_and_instances(data_longi_long_expanded_variables_final_with_missing_data)
+
+write.csv(data_longi_long_expanded_variables_final_with_missing_data, file = paste0(work_dir,'/csv_files/data_longi_long_format_expanded_variables_with_missing_data.csv'),row.names = F)
 
 
 

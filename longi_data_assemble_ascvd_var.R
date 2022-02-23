@@ -169,6 +169,7 @@ data_longi_long_complete_cases_for_analysis <- data_longi_long_complete_cases %>
 exam_year_after_event_date <- data_longi_long_na_rm %>% filter(exam_year>=time_te_in_yrs)
 # 337 instances rm: those who had follow-up data even after their CVD event date
 
+
 write.csv(data_longi_long_complete_cases_for_analysis, file = paste0(work_dir,'/csv_files/data_longi_long_format_ascvd_risk_factors_removed_missing_data.csv'),row.names = F)
 write.csv(data_longi_long_na_rm_for_analysis, file = paste0(work_dir,'/csv_files/data_longi_long_format_ascvd_risk_factors_with_missing_data.csv'),row.names = F)
 

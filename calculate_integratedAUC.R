@@ -19,16 +19,17 @@ ncores <- parallel::detectCores(all.tests = FALSE, logical = TRUE)
 
 parallelMap::parallelStartSocket(ncores-1)
 
+
 # source snippet functions:
-source_dir <- 'U:/Hieu/CARDIA_project/CARDIA_project/Git'
-source(paste0(source_dir,'/code/snippet/running_rsf.R'))
-source(paste0(source_dir,'/code/snippet/running_algo.R'))
-source(paste0(source_dir,'/code/snippet/createDir.R'))
-source(paste0(source_dir,'/code/snippet/subsetDataTopnVar.R'))
-source(paste0(source_dir,'/code/snippet/classif_task.R'))
-source(paste0(source_dir,'/code/snippet/predictSurvProb.R'))
-source(paste0(source_dir,'/code/snippet/eval_performance.R'))
-source(paste0(source_dir,'/code/snippet/eval_performance_using_different_auc_package.R'))
+source_dir <- paste0(work_dir, '/code/git_code/snippet')
+source(paste0(source_dir, '/running_rsf.R'))
+source(paste0(source_dir, '/running_algo.R'))
+source(paste0(source_dir, '/createDir.R'))
+source(paste0(source_dir, '/subsetDataTopnVar.R'))
+source(paste0(source_dir, '/classif_task.R'))
+source(paste0(source_dir, '/predictSurvProb.R'))
+source(paste0(source_dir, '/eval_performance.R'))
+source(paste0(source_dir, '/eval_performance_using_different_auc_package.R'))
 
 
 
