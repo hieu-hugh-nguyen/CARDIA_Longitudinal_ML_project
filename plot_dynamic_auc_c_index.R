@@ -151,6 +151,21 @@ cForest_y15_auc_df <- auc_df_from_performance_testset('cForest_ascvd_var_y15')
 cox_y15_auc_df_exp <- auc_df_from_performance_testset('cox_ascvd_var_y15_exp')
 
 
+cForest_tsfresh_expanded_var_df <- auc_df_from_performance_testset('cForest_expanded_var_tsfeatures_plus_data_y15_rm_correlation') 
+rsf_tsfresh_expanded_var_df <- auc_df_from_performance_testset('rsf_expanded_var_tsfeatures_corr_rm')
+
+rsf_y15_expand_var_df <- auc_df_from_performance_testset('rsf_expanded_var_y15')
+cox_y15_expand_var_df <- auc_df_from_performance_testset('cox_expanded_var_y15')
+
+cox_y0_expand_var_df <- auc_df_from_performance_testset('cox_expanded_var_baseline_no_truncate')
+
+dynamic_deephit_tuned_expanded_var_df <- auc_df_from_performance_testset('dynamic_deephit_expanded_var_y15_4_RNN_layers')
+
+rsf_tsfresh_expanded_var_df <- auc_df_from_performance_testset('rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15')
+
+#   '' 
+
+
 ### ASCVD risk score:  ######
 fold =1
 filename = paste0(work_dir, '/rdata_files/ascvd_risk_score_y0_no_truncate_fold_', fold,'/c_ascvd_testset.RData')
@@ -176,22 +191,34 @@ eval_times <- seq(1,17, 1)
 df_for_plot = data.frame(eval_times
                         # ,rsf_tsfresh_auc_df_rm_corr$median
                          #,rsf_tsfresh_plus_data_y15_auc_df_rm_corr$median
-                         ,cForest_tsfresh_auc_df_rm_corr$median
+                        , rsf_tsfresh_expanded_var_df$median
+                       # ,cForest_tsfresh_expanded_var_df$median 
+                        #,rsf_tsfresh_expanded_var_df$median
+                        #,rsf_tsfresh_expanded_var_df$median
+                        
+                        # ,cForest_tsfresh_auc_df_rm_corr$median
                          
                          #,rsf_tsfresh_auc_df$median
                          #,rsf_tsfresh_plus_data_y15_auc_df$median
                          
                          #,dynamic_deephit_untuned_auc_df_v2$median
                          
-                         ,cox_y15_auc_df$mean
-                         ,cox_y15_auc_df_exp$median
-                         ,rsf_y15_auc_df$median
-                         ,cForest_y15_auc_df$median
+                        ,rsf_y15_expand_var_df$median  
+                        ,cox_y15_expand_var_df$median
+                        
+                        , dynamic_deephit_tuned_expanded_var_df$median
+                        , cox_y0_expand_var_df$median 
+                        
+                        #,cox_y15_auc_df$mean
+
+                         # ,cox_y15_auc_df_exp$median
+                         #,rsf_y15_auc_df$median
+                         # ,cForest_y15_auc_df$median
                         
               
                          
                          
-                        ,cox_y0_auc_df$median
+                        #,cox_y0_auc_df$median
                        #  ,rsf_y0_auc_df$median
                          #,lasso_tsfresh_auc_df_rm_corr$median
                        
@@ -206,24 +233,26 @@ df_for_plot = data.frame(eval_times
 
  
                     
-df_for_plot2 <- df_for_plot %>% filter(eval_times %in%(seq(5,17,1)))
+df_for_plot2 <- df_for_plot %>% filter(eval_times %in%(seq(3,17,1)))
 
 
 
 
 names(df_for_plot2) = c('eval_times'
+                        ,'cForest on TS-derived features \n of 31 variables' #'and Static Y15 Data'
+
                         #,'RSF-TS'
                         #,'RSF on TS-derived features' #'RSF-TS and Static Y15 Data'
-                        ,'cForest on TS-derived features' #'and Static Y15 Data'
+                        ,'cForest on TS-derived features \n of 9 traditional risk factors' #'and Static Y15 Data'
                         #,'Dynamic-Deephit'
-                        ,'Cox Y15'
-                        ,'COX Y15_2'
-                        ,'RSF Y15'
-                        ,'cForest Y15'
+                        ,'RSF Y15 of 31 variables'
+                        ,'Cox Y15 of 9 risk factors'
+#                        ,'RSF Y15'
+ #                       ,'cForest Y15'
                         #,'LASSO-Cox on TS-derived features' # and Static Y15 Data'
                         #,'Joint Modeling Bayesian'
                       
-                        ,'Cox Y0'
+                        ,'Cox Y0 of 9 risk factors'
                         #,'RSF Y0'
                         #                        ,'ASCVD Risk Score Y15'
 )
@@ -252,7 +281,7 @@ auc.plot +
   scale_color_manual(values = color_scheme[1:(ncol(df_for_plot)-1)]) +
   xlab("Years After Exam 6 (Exam Year 15)") +
   ylab("Median AUC") +
-  scale_x_continuous(breaks=seq(5,17,2))+
+  scale_x_continuous(breaks=seq(3,17,2))+
   ylim(0.65, 0.9) + 
   theme_minimal() + 
   theme(axis.text=element_text(size=15),

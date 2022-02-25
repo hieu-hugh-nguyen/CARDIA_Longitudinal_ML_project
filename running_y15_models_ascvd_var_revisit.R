@@ -93,6 +93,9 @@ endpt <- 17; # after Year 15
 eval_times <- seq(1, endpt, by = 1)
 
 
+data <- data %>% dplyr::select(c("ID", "event", "time"
+                                 ,"MALE","RACEBLACK","CHOL","DIAB","HDL","AGE_Y15"
+                                 ,"HBM","SMKNW","SBP"))
 
 
 
@@ -110,7 +113,7 @@ for (fold in 1:nfolds){
   test_data$ID <- NULL
   
   
-  model_name <- 'cox_expanded_var_y15'
+  model_name <- 'cox_ascvd_var_y15_revisit'
   gc()
   main_dir <- paste0(work_dir, '/rdata_files')
   sub_dir <- paste0(model_name, '_fold_',fold)

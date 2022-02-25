@@ -18,15 +18,20 @@ eval_times = seq(1,endpt,1)
 
 model_list = c(
   ## model_name = 
-
+  'rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15'
+  # 'dynamic_deephit_expanded_var_y15_4_RNN_layers'
+  #'dynamic_deephit_expanded_var_y15'
+  #  'rsf_expanded_var_tsfeatures_corr_rm'
+  # , 'lasso_expanded_var_tsfeatures_plus_data_y15_rm_correlation'
+  # , 'cForest_expanded_var_tsfeatures_plus_data_y15_rm_correlation'
   # , 'rsf_expanded_var_y15' 
   # , 'cForest_expanded_var_y15'
   # , 'cox_expanded_var_y15'
   # , 'lasso_expanded_var_y15'
   
-   'rsf_expanded_var_baseline_no_truncate'
-   , 'cox_expanded_var_baseline_no_truncate'
-   , 'lasso_expanded_var_baseline_no_truncate'
+   # 'rsf_expanded_var_baseline_no_truncate'
+   # , 'cox_expanded_var_baseline_no_truncate'
+   # , 'lasso_expanded_var_baseline_no_truncate'
    
   
   # 'rsf_ascvd_var_tsfeatures_plus_data_y15_rm_correlation'
