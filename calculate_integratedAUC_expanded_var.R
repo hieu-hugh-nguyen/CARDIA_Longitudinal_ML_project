@@ -1,7 +1,7 @@
 # outer loop 
 
-rm(list=ls()) #Clear all
-cat("\014")
+# rm(list=ls()) #Clear all
+# cat("\014")
 
 # set working directory: 
 work_dir = 'U:/Hieu/CARDIA_longi_project'
@@ -14,6 +14,7 @@ require(dplyr)
 require(ggplot2)
 require(reshape2)
 require(matrixStats)
+require(survival)
 
 source(paste0(work_dir,'/code/git_code/snippet/bootstrap_ci.R'))
 source(paste0(work_dir,'/code/git_code/snippet/print_ci_values.R'))
@@ -81,7 +82,8 @@ get_iAUC <- function(AUC_df, St_, eval_times_for_iauc_, nfolds = 10
 
 loading_dir = paste0(work_dir, '/csv_files')
 
-data_longi_long_for_analysis <- read.csv(paste0(work_dir,'/csv_files/data_longi_long_format_expanded_variables_removed_missing_data.csv'))
+# data_longi_long_for_analysis <- read.csv(paste0(work_dir,'/csv_files/data_longi_long_format_expanded_variables_removed_missing_data.csv'))
+data_longi_long_for_analysis <- read.csv(paste0(work_dir,'/csv_files/data_longi_long_format_expanded_variables_removed_missing_data_2.csv'))
 #'/csv_files/data_longi_long_format_ascvd_risk_factors_with_missing_data.csv'
 #
 subjects_in_cohort <- read.csv(paste0(work_dir,'/csv_files/subjects_in_final_analysis_cohort.csv'))
@@ -131,7 +133,8 @@ St <- surv.object$surv[pos]
 
 
 
-eval_times_for_iauc =seq(5,endpt,1)
+eval_times_for_iauc =seq(3,10,1)
+# eval_times_for_iauc =seq(5,endpt,1)
 
 
 #model_name = 'rsf_ascvd_var_tsfeatures_plus_data_y15_rm_correlation'
@@ -139,27 +142,65 @@ eval_times_for_iauc =seq(5,endpt,1)
 model_list = c(
   ## model_name = 
   'rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15'
-  # 'rsf_expanded_var_tsfeatures_plus_data_y15'
-#  'dynamic_deephit_expanded_var_y15'
+  ,'rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15_2_4'
+  , 'lasso_expanded_var_tsfeatures_plus_data_y15_rm_correlation'
+  
+  , 'dynamic_deephit_expanded_var_y15_2_2'
+  
+  , 'rsf_expanded_var_y15_2_1'
+  , 'cox_expanded_var_y15_2'
+  , 'lasso_expanded_var_y15_2'
+  
+  , 'rsf_expanded_var_traj_plus_data_y15_gap'
+#  , 'cForest_expanded_var_traj_plus_data_y15'
+#  , 'cox_expanded_var_traj_plus_data_y15'
+#  , 'lasso_expanded_var_traj_plus_data_y15'
+  
+
+  , 'rsf_expanded_var_baseline_no_truncate_2'
+  , 'cox_expanded_var_baseline_no_truncate_2'
+  , 'lasso_expanded_var_baseline_no_truncate_2'
+  
+  
+  
+  
+  # ,'rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15_2_4_10000tree'
+  
+ # ,"rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15_2_10"
+#  , "rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15"
+#  ,"rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15_2_4_1"
+#  ,"rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15_2_4_2"
+#  ,"rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15_2_4_3"
+  
+  
+  
+#  ,"rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15_2_9"
+  
+  
+  
+#  ,'rsf_expanded_var_tsfeatures_plus_data_y15_2_3'
+  # 'rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15_2'
+ # , 'rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15_2_1'
+#  ,'rsf_expanded_var_tsfeatures_plus_data_y15_2_1'
+#  , 'rsf_expanded_var_tsfeatures_plus_data_y15_2_1_reduced_var'
+
+ # 'rsf_expanded_var_tsfeatures_plus_data_y15_2'
+
+  # 'dynamic_deephit_expanded_var_y15_2_3'
 #  'dynamic_deephit_expanded_var_y15_4_RNN_layers'
   #  'rsf_expanded_var_tsfeatures_corr_rm'
   # 'lasso_expanded_var_tsfeatures_plus_data_y15_rm_correlation'
-  # , 'cForest_expanded_var_tsfeatures_plus_data_y15_rm_correlation'
-# 'rsf_expanded_var_tsfeatures_plus_data_y15_corr_rm'
-#  'rsf_expanded_var_tsfeatures_plus_data_y15_crunchr'
-# 'rsf_expanded_var_tsfeatures_plus_data_y15_40_features'
-#  'rsf_expanded_var_tsfeatures_plus_data_y15'
- # 'rsf_expanded_var_tsfeatures_plus_data_y15_rm_correlation'
+#  , 'cForest_expanded_var_tsfeatures_plus_data_y15_rm_correlation_2'
+# ,'rsf_expanded_var_tsfeatures_plus_data_y15_corr_rm'
+# , 'rsf_expanded_var_tsfeatures_plus_data_y15_crunchr'
+#,'rsf_expanded_var_tsfeatures_plus_data_y15_40_features'
+# ,'rsf_expanded_var_tsfeatures_plus_data_y15'
+#,'rsf_expanded_var_tsfeatures_plus_data_y15_rm_correlation'
   
   
-  #   'rsf_expanded_var_y15' 
-   # , 'cForest_expanded_var_y15'
-   # , 'cox_expanded_var_y15'
-  # , 'lasso_expanded_var_y15'
-  
-  # 'rsf_expanded_var_baseline_no_truncate'
-  # , 'cox_expanded_var_baseline_no_truncate'
-  # , 'lasso_expanded_var_baseline_no_truncate'
+# , 'rsf_expanded_var_data_y15_test'
+  #  , 'rsf_expanded_var_y15_2'
+#  , 'cForest_expanded_var_y15_2'
 )
 
 for(n in 1:length(model_list)){

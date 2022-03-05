@@ -20,16 +20,16 @@ running_rsf_tuned = function(data){
   # tune rsf hyperparameter mtry and node size, using the tuning function from the package RandomForestSRC
   
   start.time = Sys.time()
-  tuneObject <- randomForestSRC::tune(Surv(time, event)~., data = data, ntreeTry=1000
+  tuneObject <- randomForestSRC::tune(Surv(time, event)~., data = data, ntreeTry=1001
                      ,mtryStart = sqrt(ncol(data)),
-                     nodesizeTry = c(1:10),
+                     nodesizeTry = c(1:9, seq(10, 100, by = 5)),
                      stepFactor = 1.25, improve = 1e-3, strikeout = 3, maxIter = 25,
                      trace = T, doBest = TRUE
   )
   #save(tuneObject, file = paste0(saving.dir,'/RFSRC_tuneObject.RData'))
   time_running_tune_object = Sys.time()-start.time
   
-  #print(tuneObject$rf)
+  print(tuneObject$rf)
   
     ## nice little wrapper for plotting results
     plot.tune <- function(o, linear = TRUE) {
@@ -55,12 +55,12 @@ running_rsf_tuned = function(data){
                        points(x,y,pch=16,cex=.25)})
     
     ## plot the surface
-    #plot.tune(tuneObject)
+    plot.tune(tuneObject)
   }
   
   start.time = Sys.time()
   rf.optimal= rfsrc(Surv(time,event)~., data = data 
-                    , ntree = 1000
+                    , ntree = 1001
                     , mtry = tuneObject$optimal['mtry']
                     , nodesize = tuneObject$optimal['nodesize']
                     , splitrule = 'logrank' #there is also logrankrandom, logrankscore, and conserve splitting  

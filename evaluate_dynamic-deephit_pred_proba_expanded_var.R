@@ -36,7 +36,8 @@ source(paste0(source_dir, '/eval_performance_using_different_auc_package.R'))
 # load the dataset
 loading_dir = paste0(work_dir, '/csv_files')
 
-data_longi_long_for_analysis <- read.csv(paste0(work_dir,'/csv_files/data_longi_long_format_expanded_variables_removed_missing_data.csv'))
+data_longi_long_for_analysis <- read.csv(paste0(work_dir,'/csv_files/data_longi_long_format_expanded_variables_removed_missing_data_2.csv'))
+#data_longi_long_for_analysis <- read.csv(paste0(work_dir,'/csv_files/data_longi_long_format_expanded_variables_removed_missing_data.csv'))
 #'/csv_files/data_longi_long_format_ascvd_risk_factors_with_missing_data.csv'
 #
 subjects_in_cohort <- read.csv(paste0(work_dir,'/csv_files/subjects_in_final_analysis_cohort.csv'))
@@ -67,9 +68,9 @@ data <- data %>% mutate(AGE_Y15 = AGE_Y0 +15) %>% dplyr::select(-AGE_Y0)
 
 
 # load training IDs:
-trainingid_all <- read.csv(paste0(work_dir,'/csv_files/all_training_set_ID.csv'))
-validationid_all <- read.csv(paste0(work_dir,'/csv_files/all_validation_set_ID.csv'))
-testingid_all <- read.csv(paste0(work_dir,'/csv_files/all_testing_set_ID.csv'))
+trainingid_all <- read.csv(paste0(work_dir,'/csv_files/all_training_set_ID_2.csv'))
+validationid_all <- read.csv(paste0(work_dir,'/csv_files/all_validation_set_ID_2.csv'))
+testingid_all <- read.csv(paste0(work_dir,'/csv_files/all_testing_set_ID_2.csv'))
 
 
 
@@ -96,9 +97,10 @@ for (fold in 1:nfolds){
   train_id <- train_data$ID
   test_id <- test_data$ID
 
+  model_name = 'dynamic_deephit_expanded_var_y15_2_3'
   gc()
   main.dir = paste0(work_dir, '/rdata_files')
-  sub.dir = paste0('dynamic_deephit_expanded_var_y15_4_RNN_layers_fold_',fold)
+  sub.dir = paste0(model_name, '_fold_',fold)
   if(!dir.exists(file.path(main.dir, sub.dir))){
     createDir(main.dir, sub.dir)
   }
@@ -107,8 +109,10 @@ for (fold in 1:nfolds){
   
   
 
-  #filename = paste0(work_dir, '/rdata_files/dynamic_deephit_expanded_var_y15_fold_', fold,'/prob_risk_test.csv')
-  filename = paste0(work_dir, '/rdata_files/dynamic_deephit_expanded_var_y15_4_RNN_layers_fold_', fold,'/prob_risk_test.csv')
+
+  # filename = paste0(work_dir, '/rdata_files/dynamic_deephit_expanded_var_y15_2_1_fold_', fold,'/prob_risk_test.csv')
+  filename = paste0(work_dir, '/rdata_files/',model_name, '_fold_', fold,'/prob_risk_test.csv')
+  
   
   prob_risk_test_with_ID = read.csv(paste0(filename))
   

@@ -36,9 +36,8 @@ source(paste0(source_dir, '/eval_performance_using_different_auc_package.R'))
 # load the dataset
 loading_dir = paste0(work_dir, '/csv_files')
 
-data_longi_long_for_analysis <- read.csv(paste0(work_dir,'/csv_files/data_longi_long_format_expanded_variables_removed_missing_data.csv'))
-#'/csv_files/data_longi_long_format_ascvd_risk_factors_with_missing_data.csv'
-#
+data_longi_long_for_analysis <- read.csv(paste0(work_dir,'/csv_files/data_longi_long_format_expanded_variables_removed_missing_data_2.csv'))
+
 subjects_in_cohort <- read.csv(paste0(work_dir,'/csv_files/subjects_in_final_analysis_cohort.csv'))
 
 data_longi_long_up_to_y15 <- data_longi_long_for_analysis %>% dplyr::filter(exam_year <=15)
@@ -57,22 +56,22 @@ data_at_baseline <- data_longi_long_for_analysis %>% dplyr::filter(ID %in% subje
 data_baseline_no_truncate_tte <- data_at_baseline %>% 
   # mutate(time_te_in_yrs = time_te_in_yrs -15) %>% 
   dplyr::select(-time) %>% dplyr::filter(time_te_in_yrs >0) %>%
-  rename(event = status) %>% rename(time = time_te_in_yrs) %>%
+  dplyr::rename(event = status) %>% dplyr::rename(time = time_te_in_yrs) %>%
   dplyr::select(-exam_year)
 
 data <- data_baseline_no_truncate_tte
 
 
-#Check if there is any character column, then delete them to make sure all data is numeric:
-nums <- unlist(lapply(data, is.character))  
-data[,nums]<-NULL
+# #Check if there is any character column, then delete them to make sure all data is numeric:
+# nums <- unlist(lapply(data, is.character))  
+# data[,nums]<-NULL
 
 
 
 # load training IDs:
-trainingid_all <- read.csv(paste0(work_dir,'/csv_files/all_training_set_ID.csv'))
-validationid_all <- read.csv(paste0(work_dir,'/csv_files/all_validation_set_ID.csv'))
-testingid_all <- read.csv(paste0(work_dir,'/csv_files/all_testing_set_ID.csv'))
+trainingid_all <- read.csv(paste0(work_dir,'/csv_files/all_training_set_ID_2.csv'))
+validationid_all <- read.csv(paste0(work_dir,'/csv_files/all_validation_set_ID_2.csv'))
+testingid_all <- read.csv(paste0(work_dir,'/csv_files/all_testing_set_ID_2.csv'))
 
 
 
@@ -107,7 +106,7 @@ for (fold in 1:nfolds){
   test_data$ID <- NULL
   
   
-  model_name <- 'cox_expanded_var_baseline_no_truncate'
+  model_name <- 'cox_expanded_var_baseline_no_truncate_2'
   gc()
   main_dir <- paste0(work_dir, '/rdata_files')
   sub_dir <- paste0(model_name, '_fold_',fold)
@@ -186,7 +185,7 @@ for (fold in 1:nfolds){
   test_data$ID <- NULL
   
   
-  model_name <- 'lasso_expanded_var_baseline_no_truncate'
+  model_name <- 'lasso_expanded_var_baseline_no_truncate_2'
   gc()
   main_dir <- paste0(work_dir, '/rdata_files')
   sub_dir <- paste0(model_name, '_fold_',fold)
@@ -268,7 +267,7 @@ for (fold in 1:nfolds){
   test_data$ID <- NULL
   
   
-  model_name <- 'rsf_expanded_var_baseline_no_truncate'
+  model_name <- 'rsf_expanded_var_baseline_no_truncate_2'
   gc()
   main_dir <- paste0(work_dir, '/rdata_files')
   sub_dir <- paste0(model_name, '_fold_',fold)

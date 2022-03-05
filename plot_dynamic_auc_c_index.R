@@ -18,79 +18,6 @@ loading.dir = paste0(work_dir,'/rdata_files')
 
 eval_time_points = 17
 
-# 
-# ### jmbayes:  ######
-# fold =1
-# filename = paste0(work_dir, '/rdata_files/jmbayes_ascvd_var_y15_fold_', fold,'/auc_over_time_testset.RData')
-# jmbayes_auc_df <-  data.frame(fold_1 = get(load(filename)))
-# 
-# for (fold in 2:nfolds){
-#   filename = paste0(work_dir, '/rdata_files/jmbayes_ascvd_var_y15_fold_', fold,'/auc_over_time_testset.RData')
-#   if(file.exists(filename)){
-#     auc_curr_fold <-as.numeric(get(load(filename)))
-#     auc_curr_fold[is.nan(auc_curr_fold)] <- as.numeric(NA)
-#     
-#     jmbayes_auc_df[[paste0('fold_',fold)]] <- auc_curr_fold
-#   }
-# }
-# jmbayes_auc_df[is.na(jmbayes_auc_df)] <- as.numeric(NA)
-# jmbayes_auc_df$mean = rowMeans(jmbayes_auc_df, na.rm = T)
-# jmbayes_auc_df$median = apply(jmbayes_auc_df[,1:(length(jmbayes_auc_df)-1)], 1, median, na.rm=T)
-# #jmbayes_auc_df$median = matrixStats::rowMedians(jmbayes_auc_df, na.rm = T)
-# 
-# 
-# 
-# 
-# 
-# ### dynamic-deephit:  ######
-# 
-# fold =1
-# filename = paste0(work_dir, '/rdata_files/dynamic_deephit_ascvd_var_y15_fold_', fold,'/c_index.csv')
-# dynamic_deephit_auc_df <-  data.frame(fold_1 = read.csv((filename))[[1]])
-# 
-# for (fold in 2:nfolds){
-#   filename = paste0(work_dir, '/rdata_files/dynamic_deephit_ascvd_var_y15_fold_', fold,'/c_index.csv')
-#   if(file.exists(filename)){
-#     auc_curr_fold <-as.numeric(read.csv((filename))[[1]])
-#     auc_curr_fold[is.nan(auc_curr_fold)] <- as.numeric(NA)
-#     if(length(auc_curr_fold)>eval_time_points){
-#       auc_curr_fold = auc_curr_fold[(length(auc_curr_fold)-eval_time_points+1) : length(auc_curr_fold)]
-#     }
-#     dynamic_deephit_auc_df[[paste0('fold_',fold)]] <- auc_curr_fold
-#   }
-# }
-# dynamic_deephit_auc_df[is.na(dynamic_deephit_auc_df)] <- as.numeric(NA)
-# dynamic_deephit_auc_df$mean = rowMeans(dynamic_deephit_auc_df, na.rm = T)
-# dynamic_deephit_auc_df$median = apply(dynamic_deephit_auc_df[,1:(length(dynamic_deephit_auc_df)-1)], 1, median, na.rm=T)
-# 
-# 
-# 
-# 
-# ### rsf-tsfresh:  ######
-# 
-# fold =1
-# filename = paste0(work_dir, '/rdata_files/rsf_ascvd_var_tsfeatures_fold_', fold,'/performance_testset.RData')
-# rsf_tsfresh_auc_df <-  data.frame(fold_1 = get(load(filename))$auc)
-# 
-# for (fold in 2:nfolds){
-#   filename = paste0(work_dir, '/rdata_files/rsf_ascvd_var_tsfeatures_fold_', fold,'/performance_testset.RData')
-# #  print(paste0('Fold ', fold))
-#   if(file.exists(filename)){
-#     auc_curr_fold <-as.numeric(get(load(filename))$auc)
-#     auc_curr_fold[is.nan(auc_curr_fold)] <- as.numeric(NA)
-#     if(length(auc_curr_fold)>eval_time_points){
-#       auc_curr_fold = auc_curr_fold[(length(auc_curr_fold)-eval_time_points+1) : length(auc_curr_fold)]
-#     }
-#     rsf_tsfresh_auc_df[[paste0('fold_',fold)]] <- auc_curr_fold
-#   }
-# }
-# rsf_tsfresh_auc_df[is.na(rsf_tsfresh_auc_df)] <- as.numeric(NA)
-# rsf_tsfresh_auc_df$mean = rowMeans(rsf_tsfresh_auc_df, na.rm = T)
-# rsf_tsfresh_auc_df$median = apply(rsf_tsfresh_auc_df[,1:(length(rsf_tsfresh_auc_df)-1)], 1, median, na.rm=T)
-# 
-# 
-
-
 ### rsf-tsfresh-plus-y15-data:  ######
 
 auc_df_from_performance_testset <- function(model_name, nfolds =10){
@@ -98,7 +25,7 @@ auc_df_from_performance_testset <- function(model_name, nfolds =10){
   filename = paste0(work_dir, '/rdata_files/',model_name,'_fold_', fold,'/performance_testset.RData')
   auc_df <-  data.frame(fold_1 = get(load(filename))$auc)
   
-  for (fold in 2:nfolds){
+  for (fold in 3:nfolds){
     filename = paste0(work_dir, '/rdata_files/',model_name,'_fold_', fold,'/performance_testset.RData')
     #  print(paste0('Fold ', fold))
     if(file.exists(filename)){
@@ -116,54 +43,76 @@ auc_df_from_performance_testset <- function(model_name, nfolds =10){
   return(auc_df)  
 }
 
-rsf_tsfresh_plus_data_y15_auc_df <- auc_df_from_performance_testset('rsf_ascvd_var_tsfeatures_plus_data_y15')
+# rsf_tsfresh_plus_data_y15_auc_df <- auc_df_from_performance_testset('rsf_ascvd_var_tsfeatures_plus_data_y15')
+# 
+# rsf_tsfresh_plus_data_y15_auc_df_rm_corr <- auc_df_from_performance_testset('rsf_ascvd_var_tsfeatures_plus_data_y15_rm_correlation')
+# 
+# rsf_tsfresh_auc_df_rm_corr <- auc_df_from_performance_testset('rsf_ascvd_var_tsfeatures_plus_data_y15_rm_correlation')
+# 
+# lasso_tsfresh_auc_df_rm_corr <-auc_df_from_performance_testset('lasso_ascvd_var_tsfeatures_rm_correlation')
+# 
+# cForest_tsfresh_auc_df_rm_corr <-auc_df_from_performance_testset('cForest_ascvd_var_tsfeatures_rm_correlation')
+# 
+# cox_y15_auc_df <- auc_df_from_performance_testset('cox_ascvd_var_y15', nfolds = 25)
+# 
+# rsf_y15_auc_df <- auc_df_from_performance_testset('rsf_ascvd_var_y15')
+#   
+# cox_y0_auc_df <- auc_df_from_performance_testset('cox_ascvd_var_baseline')
+# 
+# rsf_y0_auc_df <- auc_df_from_performance_testset('rsf_ascvd_var_baseline')
+# 
+# cox_y0_auc_df_no_truncate <- auc_df_from_performance_testset('cox_ascvd_var_baseline_no_truncate')
+# 
+# rsf_y0_auc_df_no_truncate <- auc_df_from_performance_testset('rsf_ascvd_var_baseline_no_truncate')
+# 
+# ascvd_y15_auc_df <- auc_df_from_performance_testset('ascvd_risk_score_y15')
+# 
+# ascvd_y0_auc_df_no_truncate <- auc_df_from_performance_testset('ascvd_risk_score_y0_no_truncate')
+# 
+# dynamic_deephit_untuned_auc_df_v2 <- auc_df_from_performance_testset('dynamic_deephit_ascvd_var_y15')
+# 
+# jmbayes_auc_df_v2 <- auc_df_from_performance_testset('jmbayes_ascvd_var_y15')
+# 
+# cForest_y15_auc_df <- auc_df_from_performance_testset('cForest_ascvd_var_y15')
+# 
+# cox_y15_auc_df_exp <- auc_df_from_performance_testset('cox_ascvd_var_y15_exp')
+# 
+# 
+# cForest_tsfresh_expanded_var_df <- auc_df_from_performance_testset('cForest_expanded_var_tsfeatures_plus_data_y15_rm_correlation') 
+# rsf_tsfresh_expanded_var_df <- auc_df_from_performance_testset('rsf_expanded_var_tsfeatures_corr_rm')
+# 
+# rsf_y15_expand_var_df <- auc_df_from_performance_testset('rsf_expanded_var_y15')
+# cox_y15_expand_var_df <- auc_df_from_performance_testset('cox_expanded_var_y15')
+# 
+# cox_y0_expand_var_df <- auc_df_from_performance_testset('cox_expanded_var_baseline_no_truncate')
+# 
+# dynamic_deephit_tuned_expanded_var_df <- auc_df_from_performance_testset('dynamic_deephit_expanded_var_y15_4_RNN_layers')
+# 
+# rsf_tsfresh_expanded_var_df <- auc_df_from_performance_testset('rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15')
 
-rsf_tsfresh_plus_data_y15_auc_df_rm_corr <- auc_df_from_performance_testset('rsf_ascvd_var_tsfeatures_plus_data_y15_rm_correlation')
-
-rsf_tsfresh_auc_df_rm_corr <- auc_df_from_performance_testset('rsf_ascvd_var_tsfeatures_plus_data_y15_rm_correlation')
-
-lasso_tsfresh_auc_df_rm_corr <-auc_df_from_performance_testset('lasso_ascvd_var_tsfeatures_rm_correlation')
-
-cForest_tsfresh_auc_df_rm_corr <-auc_df_from_performance_testset('cForest_ascvd_var_tsfeatures_rm_correlation')
-
-cox_y15_auc_df <- auc_df_from_performance_testset('cox_ascvd_var_y15', nfolds = 25)
-
-rsf_y15_auc_df <- auc_df_from_performance_testset('rsf_ascvd_var_y15')
-  
-cox_y0_auc_df <- auc_df_from_performance_testset('cox_ascvd_var_baseline')
-
-rsf_y0_auc_df <- auc_df_from_performance_testset('rsf_ascvd_var_baseline')
-
-cox_y0_auc_df_no_truncate <- auc_df_from_performance_testset('cox_ascvd_var_baseline_no_truncate')
-
-rsf_y0_auc_df_no_truncate <- auc_df_from_performance_testset('rsf_ascvd_var_baseline_no_truncate')
-
-ascvd_y15_auc_df <- auc_df_from_performance_testset('ascvd_risk_score_y15')
-
-ascvd_y0_auc_df_no_truncate <- auc_df_from_performance_testset('ascvd_risk_score_y0_no_truncate')
-
-dynamic_deephit_untuned_auc_df_v2 <- auc_df_from_performance_testset('dynamic_deephit_ascvd_var_y15')
-
-jmbayes_auc_df_v2 <- auc_df_from_performance_testset('jmbayes_ascvd_var_y15')
-
-cForest_y15_auc_df <- auc_df_from_performance_testset('cForest_ascvd_var_y15')
-
-cox_y15_auc_df_exp <- auc_df_from_performance_testset('cox_ascvd_var_y15_exp')
 
 
-cForest_tsfresh_expanded_var_df <- auc_df_from_performance_testset('cForest_expanded_var_tsfeatures_plus_data_y15_rm_correlation') 
-rsf_tsfresh_expanded_var_df <- auc_df_from_performance_testset('rsf_expanded_var_tsfeatures_corr_rm')
+rsf_tsfresh_expanded_var_df_2 <- auc_df_from_performance_testset('rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15_2_4')
+# rsf_tsfresh_expanded_var_df_2_1 <- auc_df_from_performance_testset('rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15_2_4_10000tree')
 
-rsf_y15_expand_var_df <- auc_df_from_performance_testset('rsf_expanded_var_y15')
-cox_y15_expand_var_df <- auc_df_from_performance_testset('cox_expanded_var_y15')
+cForest_tsfresh_expanded_var_df_2 <- auc_df_from_performance_testset('cForest_expanded_var_tsfeatures_plus_data_y15_rm_correlation_2')
 
-cox_y0_expand_var_df <- auc_df_from_performance_testset('cox_expanded_var_baseline_no_truncate')
+dynamic_deephit_tuned_expanded_var_df_2 <- auc_df_from_performance_testset('dynamic_deephit_expanded_var_y15_2_2')
 
-dynamic_deephit_tuned_expanded_var_df <- auc_df_from_performance_testset('dynamic_deephit_expanded_var_y15_4_RNN_layers')
+cox_traj_expand_var_df <- auc_df_from_performance_testset('cox_expanded_var_traj_plus_data_y15')
+rsf_traj_expand_var_df <- auc_df_from_performance_testset('rsf_expanded_var_traj_plus_data_y15')
+lasso_traj_expand_var_df <- auc_df_from_performance_testset('lasso_expanded_var_traj_plus_data_y15')
+cForest_traj_expand_var_df <- auc_df_from_performance_testset('cForest_expanded_var_traj_plus_data_y15')
 
-rsf_tsfresh_expanded_var_df <- auc_df_from_performance_testset('rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15')
+rsf_traj_expand_var_df_gap <- auc_df_from_performance_testset('rsf_expanded_var_traj_plus_data_y15_gap')
+rsf_traj_expand_var_df_gap_3 <- auc_df_from_performance_testset('rsf_expanded_var_traj_plus_data_y15_gap_3')
 
-#   '' 
+rsf_y15_expand_var_df_2 <- auc_df_from_performance_testset('rsf_expanded_var_y15_2')
+rsf_y15_expand_var_df_2_1 <- auc_df_from_performance_testset('rsf_expanded_var_y15_2_1')
+
+cox_y15_expand_var_df_2 <- auc_df_from_performance_testset('cox_expanded_var_y15_2')
+cForest_y15_expand_var_df_2 <- auc_df_from_performance_testset('cForest_expanded_var_y15_2')
+cox_y0_expand_var_df_2 <- auc_df_from_performance_testset('cox_expanded_var_baseline_no_truncate_2')
 
 
 ### ASCVD risk score:  ######
@@ -191,7 +140,18 @@ eval_times <- seq(1,17, 1)
 df_for_plot = data.frame(eval_times
                         # ,rsf_tsfresh_auc_df_rm_corr$median
                          #,rsf_tsfresh_plus_data_y15_auc_df_rm_corr$median
-                        , rsf_tsfresh_expanded_var_df$median
+                        , rsf_tsfresh_expanded_var_df_2$median
+
+                        
+                      #, cForest_tsfresh_expanded_var_df_2$median
+
+                        , dynamic_deephit_tuned_expanded_var_df_2$median
+                        
+                      , rsf_traj_expand_var_df_gap$median
+                      , rsf_traj_expand_var_df_gap_3$median
+                      #, cForest_traj_expand_var_df$median
+                        #, lasso_traj_expand_var_df$median
+
                        # ,cForest_tsfresh_expanded_var_df$median 
                         #,rsf_tsfresh_expanded_var_df$median
                         #,rsf_tsfresh_expanded_var_df$median
@@ -203,11 +163,11 @@ df_for_plot = data.frame(eval_times
                          
                          #,dynamic_deephit_untuned_auc_df_v2$median
                          
-                        ,rsf_y15_expand_var_df$median  
-                        ,cox_y15_expand_var_df$median
+                       # ,cForest_y15_expand_var_df_2$median 
+                        ,rsf_y15_expand_var_df_2_1$median  
+                        ,cox_y15_expand_var_df_2$median
                         
-                        , dynamic_deephit_tuned_expanded_var_df$median
-                        , cox_y0_expand_var_df$median 
+                        , cox_y0_expand_var_df_2$median 
                         
                         #,cox_y15_auc_df$mean
 
@@ -233,35 +193,44 @@ df_for_plot = data.frame(eval_times
 
  
                     
-df_for_plot2 <- df_for_plot %>% filter(eval_times %in%(seq(3,17,1)))
 
 
 
 
-names(df_for_plot2) = c('eval_times'
-                        ,'cForest on TS-derived features \n of 31 variables' #'and Static Y15 Data'
+names(df_for_plot) = c('eval_times'
+                        ,'RSF on longitudinal derived features' # \n of 35 variables' #'and Static Y15 Data'     
+                       #, 'cForest'
+                       , 'Dynamic-Deephit'
+                        ,'RSF on trajectory clustering data'
+                       #'RSF on clustered data gap'
+                       
+                       # ,'cForest on clustered data'
 
+                        
                         #,'RSF-TS'
                         #,'RSF on TS-derived features' #'RSF-TS and Static Y15 Data'
-                        ,'cForest on TS-derived features \n of 9 traditional risk factors' #'and Static Y15 Data'
-                        #,'Dynamic-Deephit'
-                        ,'RSF Y15 of 31 variables'
-                        ,'Cox Y15 of 9 risk factors'
+                        #,'cForest on TS-derived features \n of 9 traditional risk factors' #'and Static Y15 Data'
+                       # ,'cForest on Y15 Data'
+                       ,'RSF on Y15 data'
+                        ,'Cox on Y15 data'
+                        
 #                        ,'RSF Y15'
  #                       ,'cForest Y15'
                         #,'LASSO-Cox on TS-derived features' # and Static Y15 Data'
                         #,'Joint Modeling Bayesian'
                       
-                        ,'Cox Y0 of 9 risk factors'
+                        ,'Cox on Y0 data'
                         #,'RSF Y0'
                         #                        ,'ASCVD Risk Score Y15'
 )
 
 
+
+df_for_plot2 <- df_for_plot %>% filter(eval_times %in%(seq(5,17,1)))
+
 df_for_plot.long = melt(df_for_plot2, id = 'eval_times')
 
 names(df_for_plot.long) = c('time','Model','quant')
-
 
 
 
@@ -271,6 +240,9 @@ color_scheme <- c(
   "black", "firebrick3", "goldenrod3", "forestgreen", "dodgerblue3", "darkmagenta", "hotpink3", "steelblue4", "mediumpurple3","thistle4",
   "indianred4", "yellow4", "mediumseagreen"
 )
+# color_scheme <- c(
+#   #"royalblue", 
+#   "blue", "dodgerblue", "deepskyblue", "forestgreen", "olivedrab", "sienna")
 auc.plot +
   # geom_line(aes( time, quant, color = Model, group = Model), size = 1.3)+
    geom_point(aes( time, quant, color = Model, group = Model), size = 1.3, alpha = 0.2) +
@@ -281,8 +253,8 @@ auc.plot +
   scale_color_manual(values = color_scheme[1:(ncol(df_for_plot)-1)]) +
   xlab("Years After Exam 6 (Exam Year 15)") +
   ylab("Median AUC") +
-  scale_x_continuous(breaks=seq(3,17,2))+
-  ylim(0.65, 0.9) + 
+  scale_x_continuous(breaks=seq(5,17,2))+
+  ylim(0.68, 0.9) + 
   theme_minimal() + 
   theme(axis.text=element_text(size=15),
         axis.title=element_text(size=18,face="italic"),

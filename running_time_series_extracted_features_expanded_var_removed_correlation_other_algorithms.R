@@ -48,7 +48,7 @@ ts_features <- ts_features %>% dplyr::rename(ID = X)
 # load the dataset
 loading_dir = paste0(work_dir, '/csv_files')
 
-data_longi_long_for_analysis <- read.csv(paste0(work_dir,'/csv_files/data_longi_long_format_expanded_variables_removed_missing_data.csv'))
+data_longi_long_for_analysis <- read.csv(paste0(work_dir,'/csv_files/data_longi_long_format_expanded_variables_removed_missing_data_2.csv'))
 data_longi_long_for_analysis$ID <- data_longi_long_for_analysis$ID %>% as.character()
 
 #'/csv_files/data_longi_long_format_ascvd_risk_factors_with_missing_data.csv'
@@ -92,9 +92,9 @@ data <- data %>% mutate(AGE_Y15 = AGE_Y0 +15) %>% dplyr::select(-AGE_Y0)
 
 
 # load training IDs:
-trainingid_all <- read.csv(paste0(work_dir,'/csv_files/all_training_set_ID.csv'))
-validationid_all <- read.csv(paste0(work_dir,'/csv_files/all_validation_set_ID.csv'))
-testingid_all <- read.csv(paste0(work_dir,'/csv_files/all_testing_set_ID.csv'))
+trainingid_all <- read.csv(paste0(work_dir,'/csv_files/all_training_set_ID_2.csv'))
+validationid_all <- read.csv(paste0(work_dir,'/csv_files/all_validation_set_ID_2.csv'))
+testingid_all <- read.csv(paste0(work_dir,'/csv_files/all_testing_set_ID_2.csv'))
 
 
 
@@ -137,6 +137,7 @@ data <- data_tsfeatures_plus_most_recent_by_y15[complete.cases(data_tsfeatures_p
 
 
 
+  
 ### cFOREST ###################################
 for (fold in 1:nfolds){
   # Training and fitting model:
@@ -150,11 +151,10 @@ for (fold in 1:nfolds){
   test_data$ID <- NULL
   
   
-  model_name <- 'cForest_expanded_var_tsfeatures_plus_data_y15_rm_correlation'
+  model_name <- 'cForest_expanded_var_tsfeatures_plus_data_y15_rm_correlation_2'
   gc()
   main_dir <- paste0(work_dir, '/rdata_files')
   sub_dir <- paste0(model_name, '_fold_',fold)
-  
   if(!dir.exists(file.path(main_dir, sub_dir))){
     createDir(main_dir, sub_dir)
   }

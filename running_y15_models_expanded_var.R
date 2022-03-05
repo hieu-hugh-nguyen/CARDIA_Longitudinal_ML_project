@@ -29,16 +29,15 @@ source(paste0(source_dir, '/classif_task.R'))
 source(paste0(source_dir, '/predictSurvProb.R'))
 source(paste0(source_dir, '/eval_performance.R'))
 source(paste0(source_dir, '/eval_performance_using_different_auc_package.R'))
-
+source(paste0(source_dir, '/normalize_var_importance.R'))
 
 
 
 # load the dataset
 loading_dir = paste0(work_dir, '/csv_files')
 
-data_longi_long_for_analysis <- read.csv(paste0(work_dir,'/csv_files/data_longi_long_format_expanded_variables_removed_missing_data.csv'))
-#'/csv_files/data_longi_long_format_ascvd_risk_factors_with_missing_data.csv'
-#
+data_longi_long_for_analysis <- read.csv(paste0(work_dir,'/csv_files/data_longi_long_format_expanded_variables_removed_missing_data_2.csv'))
+
 subjects_in_cohort <- read.csv(paste0(work_dir,'/csv_files/subjects_in_final_analysis_cohort.csv'))
 
 data_longi_long_up_to_y15 <- data_longi_long_for_analysis %>% filter(exam_year <=15)
@@ -73,9 +72,9 @@ data[,nums]<-NULL
 
 
 # load training IDs:
-trainingid_all <- read.csv(paste0(work_dir,'/csv_files/all_training_set_ID.csv'))
-validationid_all <- read.csv(paste0(work_dir,'/csv_files/all_validation_set_ID.csv'))
-testingid_all <- read.csv(paste0(work_dir,'/csv_files/all_testing_set_ID.csv'))
+trainingid_all <- read.csv(paste0(work_dir,'/csv_files/all_training_set_ID_2.csv'))
+validationid_all <- read.csv(paste0(work_dir,'/csv_files/all_validation_set_ID_2.csv'))
+testingid_all <- read.csv(paste0(work_dir,'/csv_files/all_testing_set_ID_2.csv'))
 
 
 
@@ -110,7 +109,7 @@ for (fold in 1:nfolds){
   test_data$ID <- NULL
   
   
-  model_name <- 'cox_expanded_var_y15'
+  model_name <- 'cox_expanded_var_y15_2'
   gc()
   main_dir <- paste0(work_dir, '/rdata_files')
   sub_dir <- paste0(model_name, '_fold_',fold)
@@ -181,7 +180,7 @@ for (fold in 1:nfolds){
 
 for (fold in 1:nfolds){
   # Training and fitting model:
-  # fold = 11
+  # fold = 1
   trainingid <- na.omit(c(trainingid_all[,fold], validationid_all[,fold]))
   train_data <- data %>% filter(ID %in% trainingid)
   test_data <- data %>% filter((ID %in% testingid_all[,fold])) 
@@ -191,7 +190,7 @@ for (fold in 1:nfolds){
   test_data$ID <- NULL
   
   
-  model_name <- 'lasso_expanded_var_y15'
+  model_name <- 'lasso_expanded_var_y15_2_1'
   gc()
   main_dir <- paste0(work_dir, '/rdata_files')
   sub_dir <- paste0(model_name, '_fold_',fold)
@@ -270,7 +269,7 @@ for (fold in 1:nfolds){
   test_data$ID <- NULL
   
   
-  model_name <- 'rsf_expanded_var_y15'
+  model_name <- 'rsf_expanded_var_y15_2_1'
   gc()
   main_dir <- paste0(work_dir, '/rdata_files')
   sub_dir <- paste0(model_name, '_fold_',fold)
@@ -279,7 +278,11 @@ for (fold in 1:nfolds){
     createDir(main_dir, sub_dir)
   }
   set.seed(seed)
-  model <- running_rsf(train_data)
+  # model <- running_rsf(train_data)
+  model= rfsrc(Surv(time,event)~., data = train_data 
+            , ntree = 101
+            , splitrule = 'logrank' #there is also logrankrandom, logrankscore, and conserve splitting  
+  )
   saving_dir <- file.path(main_dir, sub_dir)
   save(model, file = paste0(saving_dir,'/', model_name, '.RData'))
   
@@ -312,19 +315,34 @@ for (fold in 1:nfolds){
                                             )
     save(performance_testset
          , file = paste0(saving.dir, '/performance_testset.RData'))
+    print(performance_testset$iauc.uno)
     
     
-    
-    prob_risk_train <- predictRisk.rsf(trained_model
-                                      , newdata = trained_data
-                                      , times = eval_times
-    )
-    prob_risk_train_with_ID <- cbind(train_id, prob_risk_train)
-    save(prob_risk_train_with_ID
-         , file = paste0(saving.dir, '/prob_risk_train_set_with_ID.RData'))
+    # prob_risk_train <- predictRisk.rsf(trained_model
+    #                                   , newdata = trained_data
+    #                                   , times = eval_times
+    # )
+    # prob_risk_train_with_ID <- cbind(train_id, prob_risk_train)
+    # save(prob_risk_train_with_ID
+    #      , file = paste0(saving.dir, '/prob_risk_train_set_with_ID.RData'))
     
   }, error=function(e){cat("ERROR :",conditionMessage(e), "\n")})
   
+  
+    # VIMP:
+
+
+    max.subtree = max.subtree(model, conservative = F)
+    #save(max.subtree, file = paste(saving.dir, '/RF_maxtree.Rdata', sep = ''))
+
+    # Get minimal depth of maximal subtree in terms of variable name, ascending order:
+    allvardepth = sort(max.subtree$order[, 1])
+    allvardepth.df = data.frame(Variable=names(allvardepth),MinDepthMaxSubtree=allvardepth,row.names = NULL)
+
+    allvardepth.df$normalized_depth = normalize_var_imp(allvardepth.df$MinDepthMaxSubtree)
+
+    write.csv(allvardepth.df, file = paste(saving_dir, '/depth_rank.csv', sep = ''),row.names=F)
+
   
 }
 
@@ -348,7 +366,7 @@ for (fold in 1:nfolds){
   test_data$ID <- NULL
   
   
-  model_name <- 'cForest_expanded_var_y15'
+  model_name <- 'cForest_expanded_var_y15_2'
   gc()
   main_dir <- paste0(work_dir, '/rdata_files')
   sub_dir <- paste0(model_name, '_fold_',fold)

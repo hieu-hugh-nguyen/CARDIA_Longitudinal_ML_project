@@ -18,20 +18,42 @@ eval_times = seq(1,endpt,1)
 
 model_list = c(
   ## model_name = 
-  'rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15'
+
+  # 'rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15'
+  # ,'rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15_2_4'
+  # , 'lasso_expanded_var_tsfeatures_plus_data_y15_rm_correlation'
+  # 
+  # , 'dynamic_deephit_expanded_var_y15_2_2'
+  'rsf_expanded_var_traj_plus_data_y15_gap'
+  
+  # , 'rsf_expanded_var_y15_2_1'
+  # , 'cox_expanded_var_y15_2'
+   #'lasso_expanded_var_y15_2'
+  #, 'lasso_expanded_var_y15_2_1'
+  
+  
+  # , 'rsf_expanded_var_baseline_no_truncate_2'
+  # , 'cox_expanded_var_baseline_no_truncate_2'
+  # , 'lasso_expanded_var_baseline_no_truncate_2'
+  
+  
+  # 'rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15_2'
+#  'rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15_2_1'
+   
   # 'dynamic_deephit_expanded_var_y15_4_RNN_layers'
-  #'dynamic_deephit_expanded_var_y15'
+  # 'dynamic_deephit_expanded_var_y15_2_2'
   #  'rsf_expanded_var_tsfeatures_corr_rm'
   # , 'lasso_expanded_var_tsfeatures_plus_data_y15_rm_correlation'
   # , 'cForest_expanded_var_tsfeatures_plus_data_y15_rm_correlation'
-  # , 'rsf_expanded_var_y15' 
-  # , 'cForest_expanded_var_y15'
-  # , 'cox_expanded_var_y15'
-  # , 'lasso_expanded_var_y15'
   
-   # 'rsf_expanded_var_baseline_no_truncate'
-   # , 'cox_expanded_var_baseline_no_truncate'
-   # , 'lasso_expanded_var_baseline_no_truncate'
+  #  'rsf_expanded_var_y15_2'
+  # , 'cForest_expanded_var_y15_2'
+  # , 'cox_expanded_var_y15_2'
+  # , 'lasso_expanded_var_y15_2'
+  # 
+  #  , 'rsf_expanded_var_baseline_no_truncate_2'
+  #  , 'cox_expanded_var_baseline_no_truncate_2'
+  #  , 'lasso_expanded_var_baseline_no_truncate_2'
    
   
   # 'rsf_ascvd_var_tsfeatures_plus_data_y15_rm_correlation'
@@ -52,11 +74,17 @@ agg_perf_and_ci <- function(model_name, ndigits = 3){
     
     if (fold ==1){
       performance.all = list()
-    }  
+    }
+
     tryCatch({
-    performance = list((get(load(paste0(loading.dir,'/performance_testset.RData')))))
-    performance.all = append(performance.all, performance)
-    }, error=function(e){cat("WARNING :",conditionMessage(e), "fold ", fold, "\n")})
+   # if (fold == 2){
+   #  performance.all = performance.all
+   #}
+   # else{
+     performance = list((get(load(paste0(loading.dir,'/performance_testset.RData')))))
+     performance.all = append(performance.all, performance)
+   # }
+   }, error=function(e){cat("WARNING :",conditionMessage(e), "fold ", fold, "\n")})
   }
   
   # extract each metric: 
@@ -123,10 +151,10 @@ agg_perf_and_ci <- function(model_name, ndigits = 3){
   last.brier = static.summary$last.brier.all
   
   
-  plot(eval_times[3:length(eval_times)], dynamic.summary$dynamic.auc.uno.all[3:length(eval_times)], type = 'l'
-       ,ylim = c(0.5, 1))
-  lines(eval_times[3:length(eval_times)], dynamic.summary$dynamic.cindex.all[3:length(eval_times)], col = 'red')
-  lines(eval_times[3:length(eval_times)], dynamic.summary$dynamic.auc.all[3:length(eval_times)], col = 'blue')
+  # plot(eval_times[3:length(eval_times)], dynamic.summary$dynamic.auc.uno.all[3:length(eval_times)], type = 'l'
+  #      ,ylim = c(0.5, 1))
+  # lines(eval_times[3:length(eval_times)], dynamic.summary$dynamic.cindex.all[3:length(eval_times)], col = 'red')
+  # lines(eval_times[3:length(eval_times)], dynamic.summary$dynamic.auc.all[3:length(eval_times)], col = 'blue')
 
   
   
