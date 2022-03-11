@@ -12,7 +12,7 @@ setwd(work_dir)
 
 ## average permutation VIMP:
 
-model_name = 'rsf_expanded_var_traj_plus_data_y15_gap_3'
+model_name = 'rsf_expanded_var_concat'
 nfold = 10
 
 fold = 1
@@ -44,31 +44,31 @@ write.csv(feature.ranking.median[,c('index','var.name','Median_vimp','normalized
 
 
 
-# ## average min depth:
-# 
-# model_name = 'rsf_expanded_var_traj_plus_data_y15_gap'
-# nfold = 10
-# 
-# fold = 1
-# loading.dir = paste0(work_dir,'/rdata_files/', model_name, '_fold_',fold)
-# feature.ranking = read.csv(paste0(loading.dir,'/depth_rank.csv'))
-# colnames(feature.ranking)[2] = paste0('MinDepth_fold_', fold)
-# feature.ranking$normalized_depth = NULL
-# #colnames(feature.ranking)[1] = ''
-# for (fold in 2:nfold){
-#   loading.dir = paste0(work_dir,'/rdata_files/', model_name, '_fold_',fold)
-#   feature.ranking.foldn = read.csv(paste0(loading.dir,'/depth_rank.csv'))
-#   colnames(feature.ranking.foldn)[2] = paste0('MinDepth_fold_', fold)
-#   feature.ranking = merge(feature.ranking, feature.ranking.foldn[,c(1,2)], .by = 'Variable')
-# }
-# feature.ranking$'Avg_min_depth' = rowMeans(feature.ranking[,seq(2,nfold+2,1)])
-# feature.ranking = within(feature.ranking, rm(Var.2))
-# feature.ranking = feature.ranking[order(feature.ranking$Avg_min_depth),]
-# feature.ranking$normalized_depth = normalize_var_imp(feature.ranking$Avg_min_depth)
-# 
-# saving.dir = createDir(work_dir, 'csv_files')
-# feature.ranking$'index' = seq(1,nrow(feature.ranking),1)
-# write.csv(feature.ranking[,c('index','Variable','Avg_min_depth','normalized_depth')]
-#           ,file = paste0(saving.dir,'/averaged_outerloop_MinDepth_', model_name,'.csv'), row.names = F)
-# 
-# 
+## average min depth:
+
+model_name = 'rsf_expanded_var_concat'
+nfold = 10
+
+fold = 1
+loading.dir = paste0(work_dir,'/rdata_files/', model_name, '_fold_',fold)
+feature.ranking = read.csv(paste0(loading.dir,'/depth_rank.csv'))
+colnames(feature.ranking)[2] = paste0('MinDepth_fold_', fold)
+feature.ranking$normalized_depth = NULL
+#colnames(feature.ranking)[1] = ''
+for (fold in 2:nfold){
+  loading.dir = paste0(work_dir,'/rdata_files/', model_name, '_fold_',fold)
+  feature.ranking.foldn = read.csv(paste0(loading.dir,'/depth_rank.csv'))
+  colnames(feature.ranking.foldn)[2] = paste0('MinDepth_fold_', fold)
+  feature.ranking = merge(feature.ranking, feature.ranking.foldn[,c(1,2)], .by = 'Variable')
+}
+feature.ranking$'Avg_min_depth' = rowMeans(feature.ranking[,seq(2,nfold+1,1)])
+feature.ranking = within(feature.ranking, rm(Var.2))
+feature.ranking = feature.ranking[order(feature.ranking$Avg_min_depth),]
+feature.ranking$normalized_depth = normalize_var_imp(feature.ranking$Avg_min_depth)
+
+saving.dir = createDir(work_dir, 'csv_files')
+feature.ranking$'index' = seq(1,nrow(feature.ranking),1)
+write.csv(feature.ranking[,c('index','Variable','Avg_min_depth','normalized_depth')]
+          ,file = paste0(saving.dir,'/averaged_outerloop_MinDepth_', model_name,'.csv'), row.names = F)
+
+

@@ -245,7 +245,7 @@ data_and_cluster_df <- data %>%
                dplyr::filter(!duplicated(ID, fromLast=TRUE))
              , by = 'ID')
 # nrow(data_and_cluster_df)
-
+write.csv(data_and_cluster_df, file = paste0(work_dir, '/csv_files','/data_for_traj_models.csv'), row.names = F)
 
 
 

@@ -106,6 +106,8 @@ cForest_traj_expand_var_df <- auc_df_from_performance_testset('cForest_expanded_
 
 rsf_traj_expand_var_df_gap <- auc_df_from_performance_testset('rsf_expanded_var_traj_plus_data_y15_gap')
 rsf_traj_expand_var_df_gap_3 <- auc_df_from_performance_testset('rsf_expanded_var_traj_plus_data_y15_gap_3')
+rsf_traj_expand_var_df_gap_2 <- auc_df_from_performance_testset('rsf_expanded_var_traj_plus_data_y15_gap_2')
+
 
 rsf_y15_expand_var_df_2 <- auc_df_from_performance_testset('rsf_expanded_var_y15_2')
 rsf_y15_expand_var_df_2_1 <- auc_df_from_performance_testset('rsf_expanded_var_y15_2_1')
@@ -115,23 +117,27 @@ cForest_y15_expand_var_df_2 <- auc_df_from_performance_testset('cForest_expanded
 cox_y0_expand_var_df_2 <- auc_df_from_performance_testset('cox_expanded_var_baseline_no_truncate_2')
 
 
-### ASCVD risk score:  ######
-fold =1
-filename = paste0(work_dir, '/rdata_files/ascvd_risk_score_y0_no_truncate_fold_', fold,'/c_ascvd_testset.RData')
-ascvd_auc_df <-  data.frame(fold_1 = get(load(filename)))
+rsf_concat_expand_var_df <- auc_df_from_performance_testset('rsf_expanded_var_concat')
+rsf_concat_expand_var_df_ntree_100 <- auc_df_from_performance_testset('rsf_expanded_var_concat_ntree_100')
 
-for (fold in 2:nfolds){
-  filename = paste0(work_dir, '/rdata_files/ascvd_risk_score_y0_no_truncate_fold_', fold,'/c_ascvd_testset.RData')
-  if(file.exists(filename)){
-    auc_curr_fold <-as.numeric(get(load(filename)))
-    auc_curr_fold[is.nan(auc_curr_fold)] <- as.numeric(NA)
 
-    ascvd_auc_df[[paste0('fold_',fold)]] <- auc_curr_fold
-  }
-}
-ascvd_auc_df[is.na(ascvd_auc_df)] <- as.numeric(NA)
-ascvd_auc_df$mean = rowMeans(ascvd_auc_df, na.rm = T)
-ascvd_auc_df$median = apply(ascvd_auc_df[,1:(length(ascvd_auc_df)-1)], 1, median, na.rm=T)
+# ### ASCVD risk score:  ######
+# fold =1
+# filename = paste0(work_dir, '/rdata_files/ascvd_risk_score_y0_no_truncate_fold_', fold,'/c_ascvd_testset.RData')
+# ascvd_auc_df <-  data.frame(fold_1 = get(load(filename)))
+# 
+# for (fold in 2:nfolds){
+#   filename = paste0(work_dir, '/rdata_files/ascvd_risk_score_y0_no_truncate_fold_', fold,'/c_ascvd_testset.RData')
+#   if(file.exists(filename)){
+#     auc_curr_fold <-as.numeric(get(load(filename)))
+#     auc_curr_fold[is.nan(auc_curr_fold)] <- as.numeric(NA)
+# 
+#     ascvd_auc_df[[paste0('fold_',fold)]] <- auc_curr_fold
+#   }
+# }
+# ascvd_auc_df[is.na(ascvd_auc_df)] <- as.numeric(NA)
+# ascvd_auc_df$mean = rowMeans(ascvd_auc_df, na.rm = T)
+# ascvd_auc_df$median = apply(ascvd_auc_df[,1:(length(ascvd_auc_df)-1)], 1, median, na.rm=T)
 
 
 
@@ -147,8 +153,11 @@ df_for_plot = data.frame(eval_times
 
                         , dynamic_deephit_tuned_expanded_var_df_2$median
                         
+                      ,rsf_concat_expand_var_df$median
+                      
                       , rsf_traj_expand_var_df_gap$median
-                      , rsf_traj_expand_var_df_gap_3$median
+                     # , rsf_traj_expand_var_df_gap_2$median
+                      # , rsf_traj_expand_var_df_gap_3$median
                       #, cForest_traj_expand_var_df$median
                         #, lasso_traj_expand_var_df$median
 
@@ -201,6 +210,7 @@ names(df_for_plot) = c('eval_times'
                         ,'RSF on longitudinal derived features' # \n of 35 variables' #'and Static Y15 Data'     
                        #, 'cForest'
                        , 'Dynamic-Deephit'
+                       , 'RSF on concatenated data'
                         ,'RSF on trajectory clustering data'
                        #'RSF on clustered data gap'
                        
