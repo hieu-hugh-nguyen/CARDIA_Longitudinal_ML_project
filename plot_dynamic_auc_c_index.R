@@ -108,8 +108,20 @@ rsf_traj_expand_var_df_gap <- auc_df_from_performance_testset('rsf_expanded_var_
 rsf_traj_expand_var_df_gap_3 <- auc_df_from_performance_testset('rsf_expanded_var_traj_plus_data_y15_gap_3')
 rsf_traj_expand_var_df_gap_2 <- auc_df_from_performance_testset('rsf_expanded_var_traj_plus_data_y15_gap_2')
 
+rsf_traj_only_expand_var_df_gap <- auc_df_from_performance_testset('rsf_expanded_var_traj_only_gap')
+rsf_traj_trcovw_df <- auc_df_from_performance_testset('rsf_expanded_var_traj_only_trcovw_4')
+cox_traj_trcovw_df <- auc_df_from_performance_testset('cox_expanded_var_traj_only_trcovw_4')
 
-rsf_y15_expand_var_df_2 <- auc_df_from_performance_testset('rsf_expanded_var_y15_2')
+rsf_traj_trcovw_plus_y15_data_df_4 <- auc_df_from_performance_testset('rsf_expanded_var_traj_trcovw_plus_some_y15_data_4')
+rsf_traj_trcovw_plus_y15_data_df_5 <- auc_df_from_performance_testset('rsf_expanded_var_traj_trcovw_plus_some_y15_data_5')
+rsf_traj_trcovw_plus_y15_data_df_6 <- auc_df_from_performance_testset('rsf_expanded_var_traj_trcovw_plus_some_y15_data_6')
+
+rsf_traj_cont_n_binary_var_only_trcovw <- auc_df_from_performance_testset('rsf_expanded_var_traj_cont_n_binary_var_only_trcovw')
+# rsf_traj_cont_n_binary_var_only_trcovw_2 <- auc_df_from_performance_testset('rsf_expanded_var_traj_cont_n_binary_var_only_trcovw_2')
+# cox_traj_cont_n_binary_var_only_trcovw <- auc_df_from_performance_testset('cox_expanded_var_traj_cont_n_binary_var_only_trcovw')
+# lasso_traj_cont_n_binary_var_only_trcovw <- auc_df_from_performance_testset('lasso_expanded_var_traj_cont_n_binary_var_only_trcovw')
+
+# rsf_y15_expand_var_df_2 <- auc_df_from_performance_testset('rsf_expanded_var_y15_2')
 rsf_y15_expand_var_df_2_1 <- auc_df_from_performance_testset('rsf_expanded_var_y15_2_1')
 
 cox_y15_expand_var_df_2 <- auc_df_from_performance_testset('cox_expanded_var_y15_2')
@@ -118,7 +130,8 @@ cox_y0_expand_var_df_2 <- auc_df_from_performance_testset('cox_expanded_var_base
 
 
 rsf_concat_expand_var_df <- auc_df_from_performance_testset('rsf_expanded_var_concat')
-rsf_concat_expand_var_df_ntree_100 <- auc_df_from_performance_testset('rsf_expanded_var_concat_ntree_100')
+# rsf_concat_expand_var_df_ntree_100 <- auc_df_from_performance_testset('rsf_expanded_var_concat_ntree_100')
+
 
 
 # ### ASCVD risk score:  ######
@@ -153,9 +166,15 @@ df_for_plot = data.frame(eval_times
 
                         , dynamic_deephit_tuned_expanded_var_df_2$median
                         
-                      ,rsf_concat_expand_var_df$median
+                      , rsf_concat_expand_var_df$median
                       
-                      , rsf_traj_expand_var_df_gap$median
+                    #  , rsf_traj_expand_var_df_gap$median
+                     # , rsf_traj_trcovw_df$median 
+                     
+                     # , rsf_traj_trcovw_plus_y15_data_df_6$median
+                     , rsf_traj_cont_n_binary_var_only_trcovw$median
+                      #, rsf_traj_only_expand_var_df_gap$median
+
                      # , rsf_traj_expand_var_df_gap_2$median
                       # , rsf_traj_expand_var_df_gap_3$median
                       #, cForest_traj_expand_var_df$median
@@ -211,7 +230,9 @@ names(df_for_plot) = c('eval_times'
                        #, 'cForest'
                        , 'Dynamic-Deephit'
                        , 'RSF on concatenated data'
-                        ,'RSF on trajectory clustering data'
+                      # , 'RSF on trajectory clustering data plus Y15 data'
+                       , 'RSF on trajectory clustering data'
+                       
                        #'RSF on clustered data gap'
                        
                        # ,'cForest on clustered data'
@@ -264,10 +285,172 @@ auc.plot +
   xlab("Years After Exam 6 (Exam Year 15)") +
   ylab("Median AUC") +
   scale_x_continuous(breaks=seq(5,17,2))+
-  ylim(0.68, 0.9) + 
+  ylim(0.68, 0.90) + 
+  theme_minimal() + 
+  theme(axis.text=element_text(size=14),
+        axis.title=element_text(size=15,face="italic"),
+        legend.title = element_text(color = "black", size = 15),
+        legend.text = element_text(color = "black", size = 14)) 
+ # geom_vline(xintercept=10)
+
+
+
+# Save figure in high resolution:
+auc.plot +
+  # geom_line(aes( time, quant, color = Model, group = Model), size = 1.3)+
+  geom_point(aes( time, quant, color = Model, group = Model), size = 1.2, alpha = 0.2) +
+  geom_smooth(aes( time, quant, color = Model, group = Model), size = 1.2, se = FALSE, method = 'loess', span = 1)+ #usual lowess span = 1
+  # geom_smooth(aes( time, quant, color = Model, group = Model), size = 1.3, se = FALSE, method = lm, formula = y ~ x)+
+  
+  # geom_smooth(aes( time, quant, color = Model, group = Model), size = 1.3, se = FALSE, method = lm, formula = y ~ splines::bs(x, 1))+
+  scale_color_manual(values = color_scheme[1:(ncol(df_for_plot)-1)]) +
+  xlab("Years After Exam 6 (Exam Y15)") +
+  ylab("Median AUC") +
+  scale_x_continuous(breaks=seq(5,17,2))+
+  ylim(0.68, 0.90) + 
   theme_minimal() + 
   theme(axis.text=element_text(size=15),
-        axis.title=element_text(size=18,face="italic"),
-        legend.title = element_text(color = "black", size = 18),
-        legend.text = element_text(color = "black", size = 18)) 
- # geom_vline(xintercept=10)
+        axis.title=element_text(size=16,face="italic"),
+        legend.title = element_text(color = "black", size = 16),
+        legend.text = element_text(color = "black", size = 15),
+        legend.justification = c(1, 1), legend.position = c(1, 1)
+  ) 
+# geom_vline(xintercept=10)
+
+ggsave(filename = 'median_AUC_over_time_figure.tif', path = paste0(work_dir, '/figures')
+       , units = 'in', width = 7.5, height = 6.5
+       , device = 'tiff', dpi = 300)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+eval_times <- seq(1,17, 1)
+
+df_for_plot = data.frame(eval_times
+                       
+                         , rsf_tsfresh_expanded_var_df_2$mean
+                         , dynamic_deephit_tuned_expanded_var_df_2$mean
+                         
+                         , rsf_concat_expand_var_df$mean
+                         
+                         , rsf_traj_cont_n_binary_var_only_trcovw$mean
+                          ,rsf_y15_expand_var_df_2_1$mean  
+                         ,cox_y15_expand_var_df_2$mean
+                         
+                         , cox_y0_expand_var_df_2$mean 
+                         
+                       
+)
+
+
+
+
+
+
+
+
+names(df_for_plot) = c('eval_times'
+                       ,'RSF on longitudinal derived features' # \n of 35 variables' #'and Static Y15 Data'     
+                       #, 'cForest'
+                       , 'Dynamic-Deephit'
+                       , 'RSF on concatenated data'
+                       # , 'RSF on trajectory clustering data plus Y15 data'
+                       , 'RSF on trajectory clustering data'
+                       
+                       #'RSF on clustered data gap'
+                       
+                       # ,'cForest on clustered data'
+                       
+                       
+                       #,'RSF-TS'
+                       #,'RSF on TS-derived features' #'RSF-TS and Static Y15 Data'
+                       #,'cForest on TS-derived features \n of 9 traditional risk factors' #'and Static Y15 Data'
+                       # ,'cForest on Y15 Data'
+                       ,'RSF on Y15 data'
+                       ,'Cox on Y15 data'
+                       
+                       #                        ,'RSF Y15'
+                       #                       ,'cForest Y15'
+                       #,'LASSO-Cox on TS-derived features' # and Static Y15 Data'
+                       #,'Joint Modeling Bayesian'
+                       
+                       ,'Cox on Y0 data'
+                       #,'RSF Y0'
+                       #                        ,'ASCVD Risk Score Y15'
+)
+
+
+
+df_for_plot2 <- df_for_plot %>% filter(eval_times %in%(seq(5,17,1)))
+
+df_for_plot.long = melt(df_for_plot2, id = 'eval_times')
+
+names(df_for_plot.long) = c('time','Model','quant')
+
+
+
+auc.plot = ggplot(data = df_for_plot.long)
+
+color_scheme <- c(
+  "black", "firebrick3", "goldenrod3", "forestgreen", "dodgerblue3", "darkmagenta", "hotpink3", "steelblue4", "mediumpurple3","thistle4",
+  "indianred4", "yellow4", "mediumseagreen"
+)
+# color_scheme <- c(
+#   #"royalblue", 
+#   "blue", "dodgerblue", "deepskyblue", "forestgreen", "olivedrab", "sienna")
+auc.plot +
+  # geom_line(aes( time, quant, color = Model, group = Model), size = 1.3)+
+  geom_point(aes( time, quant, color = Model, group = Model), size = 1.3, alpha = 0.2) +
+  geom_smooth(aes( time, quant, color = Model, group = Model), size = 1.3, se = FALSE, method = 'loess', span = 1)+ #usual lowess span = 1
+  # geom_smooth(aes( time, quant, color = Model, group = Model), size = 1.3, se = FALSE, method = lm, formula = y ~ x)+
+  
+  # geom_smooth(aes( time, quant, color = Model, group = Model), size = 1.3, se = FALSE, method = lm, formula = y ~ splines::bs(x, 1))+
+  scale_color_manual(values = color_scheme[1:(ncol(df_for_plot)-1)]) +
+  xlab("Years After Exam 6 (Exam Year 15)") +
+  ylab("mean AUC") +
+  scale_x_continuous(breaks=seq(5,17,2))+
+  ylim(0.68, 0.90) + 
+  theme_minimal() + 
+  theme(axis.text=element_text(size=14),
+        axis.title=element_text(size=15,face="italic"),
+        legend.title = element_text(color = "black", size = 15),
+        legend.text = element_text(color = "black", size = 14)) 
+# geom_vline(xintercept=10)
+
+
+
+# Save figure in high resolution:
+auc.plot +
+  # geom_line(aes( time, quant, color = Model, group = Model), size = 1.3)+
+  geom_point(aes( time, quant, color = Model, group = Model), size = 1.2, alpha = 0.2) +
+  geom_smooth(aes( time, quant, color = Model, group = Model), size = 1.2, se = FALSE, method = 'loess', span = 1)+ #usual lowess span = 1
+  # geom_smooth(aes( time, quant, color = Model, group = Model), size = 1.3, se = FALSE, method = lm, formula = y ~ x)+
+  
+  # geom_smooth(aes( time, quant, color = Model, group = Model), size = 1.3, se = FALSE, method = lm, formula = y ~ splines::bs(x, 1))+
+  scale_color_manual(values = color_scheme[1:(ncol(df_for_plot)-1)]) +
+  xlab("Years After Exam 6 (Exam Y15)") +
+  ylab("mean AUC") +
+  scale_x_continuous(breaks=seq(5,17,2))+
+  ylim(0.68, 0.90) + 
+  theme_minimal() + 
+  theme(axis.text=element_text(size=15),
+        axis.title=element_text(size=16,face="italic"),
+        legend.title = element_text(color = "black", size = 16),
+        legend.text = element_text(color = "black", size = 15),
+        legend.justification = c(1, 1), legend.position = c(1, 1)
+  ) 
+# geom_vline(xintercept=10)
+
+ggsave(filename = 'mean_AUC_over_time_figure.tif', path = paste0(work_dir, '/figures')
+       , units = 'in', width = 7.5, height = 6.5
+       , device = 'tiff', dpi = 300)

@@ -343,7 +343,7 @@ data_longi_long_expanded_variables_final <- data_longi_long_expanded_variables_a
   dplyr::select(-one_of(c('HEART', 'HRTAK'))) 
 count_N_subjects_and_instances(data_longi_long_expanded_variables_final)
 
-write.csv(data_longi_long_expanded_variables_final, file = paste0(work_dir,'/csv_files/data_longi_long_format_expanded_variables_removed_missing_data_2.csv'),row.names = F)
+# write.csv(data_longi_long_expanded_variables_final, file = paste0(work_dir,'/csv_files/data_longi_long_format_expanded_variables_removed_missing_data_2.csv'),row.names = F)
 
 
 # same cohort but with missing data:
@@ -352,18 +352,84 @@ data_longi_long_expanded_variables_final_with_missing_data <- data_longi_long_ex
   filter(ID %notin% subjects_with_hrtak)
 count_N_subjects_and_instances(data_longi_long_expanded_variables_final_with_missing_data)
 
-write.csv(data_longi_long_expanded_variables_final_with_missing_data, file = paste0(work_dir,'/csv_files/data_longi_long_format_expanded_variables_with_missing_data_2.csv'),row.names = F)
+# write.csv(data_longi_long_expanded_variables_final_with_missing_data, file = paste0(work_dir,'/csv_files/data_longi_long_format_expanded_variables_with_missing_data_2.csv'),row.names = F)
 
 
 # cohort with all subjects:
 
 count_N_subjects_and_instances(data_longi_long_na_fill)
-write.csv(data_longi_long_na_fill %>% dplyr::select(-one_of(c('HEART', 'HRTAK'))), file = paste0(work_dir,'/csv_files/data_longi_long_expanded_variables_final_all_subjects_with_missing_data_up_to_y15.csv'),row.names = F)
+# write.csv(data_longi_long_na_fill %>% dplyr::select(-one_of(c('HEART', 'HRTAK'))), file = paste0(work_dir,'/csv_files/data_longi_long_expanded_variables_final_all_subjects_with_missing_data_up_to_y15.csv'),row.names = F)
+
 
 
 data_longi_long_expanded_variables_final_all_subjects_with_missing_data_up_to_y15_rm_hrtak <- data_longi_long_na_fill %>%
   dplyr::select(-one_of(c('HEART', 'HRTAK'))) %>% 
   filter(ID %notin% subjects_with_hrtak)
-count_N_subjects_and_instances(data_longi_long_expanded_variables_final_all_subjects_with_missing_data_up_to_y15)
-write.csv(data_longi_long_expanded_variables_final_all_subjects_with_missing_data_up_to_y15_rm_hrtak, file = paste0(work_dir,'/csv_files/data_longi_long_expanded_variables_final_all_subjects_with_missing_data_up_to_y15_rm_hratk.csv'),row.names = F)
+count_N_subjects_and_instances(data_longi_long_expanded_variables_final_all_subjects_with_missing_data_up_to_y15_rm_hrtak)
+# write.csv(data_longi_long_expanded_variables_final_all_subjects_with_missing_data_up_to_y15_rm_hrtak, file = paste0(work_dir,'/csv_files/data_longi_long_expanded_variables_final_all_subjects_with_missing_data_up_to_y15_rm_hratk.csv'),row.names = F)
 
+
+
+
+
+## same filtering process for data with all subjects: #######################################
+var_must_be_non_missing_ascvd <- c('SBP', 'HDL', 'CHOL')
+data_longi_long_expanded_variables_complete_ascvd_vars <- data_longi_long_na_fill %>% 
+  drop_na(all_of(var_must_be_non_missing_ascvd))
+count_N_subjects_and_instances(data_longi_long_expanded_variables_complete_ascvd_vars)
+
+var_must_be_non_missing_expanded_1 <- c('DBP', 'BMI')
+data_longi_long_expanded_variables_complete_essential_vars_1 <- data_longi_long_expanded_variables_complete_ascvd_vars %>% 
+  drop_na(all_of(var_must_be_non_missing_expanded_1))
+count_N_subjects_and_instances(data_longi_long_expanded_variables_complete_essential_vars_1)
+
+
+
+
+### Use LOCF to fill in missing data: 
+na.locf2 <- function(x) zoo::na.locf(x, na.rm = FALSE)
+data_longi_long_expanded_variables_complete_essential_vars_1_locf <- 
+  data_longi_long_expanded_variables_complete_essential_vars_1 %>% group_by(ID) %>%
+  do(na.locf2(.)) %>% ungroup()
+# View(show_na_in_any_row(data_longi_long_expanded_variables_complete_essential_vars_1_locf))
+# there are still early year missing (exam_year == 0) in ARMCI, GLU so will use NOCB
+
+# Use NOCB to fill missing data in early exam years if they had data in following exam years:
+data_longi_long_expanded_variables_complete_essential_vars_1_locf_nocb <- 
+  data_longi_long_expanded_variables_complete_essential_vars_1_locf %>% 
+  tidyr::fill(names(.)
+              , .direction = 'up')
+# View(show_na_in_any_row(data_longi_long_expanded_variables_complete_essential_vars_1_locf_nocb))
+# no more missing data
+
+# data_at_least_one_NA <- 
+#   data_longi_long_expanded_variables_complete_essential_vars[!complete.cases(data_longi_long_expanded_variables_complete_essential_vars), ]
+# # data_at_least_one_NA$ID %>% unique() %>% length()
+
+# na_count_df <-data.frame(na_count = sapply(data_longi_long_expanded_variables_complete_essential_vars_1_2, function(y) sum(length(which(is.na(y))))))
+# na_count_df$var_name <- rownames(na_count_df)
+
+na_count_df <-data.frame(na_count = sapply(data_longi_long_expanded_variables_complete_essential_vars_1_locf_nocb, function(y) sum(length(which(is.na(y))))))
+na_count_df$var_name <- rownames(na_count_df)
+
+
+
+
+
+### remove subjects with prior heart attack:
+subjects_with_hrtak <- data_longi_long_expanded_variables_complete_essential_vars_1_locf_nocb %>% 
+  filter(HRTAK== 1) %>% dplyr::select(ID) %>% unlist() %>% as.character() %>% unique()
+# 12 unique subjects with HRTAK
+# data_longi_long_expanded_variables_complete_essential_vars_1_locf_nocb %>% filter(HEART== 1) %>% dplyr::select(ID) %>% unique() %>% nrow()
+data_longi_long_expanded_variables_complete_essential_vars_1_locf_nocb_rm_hrtak <- 
+  data_longi_long_expanded_variables_complete_essential_vars_1_locf_nocb %>% 
+  filter(ID %notin% subjects_with_hrtak)
+count_N_subjects_and_instances(data_longi_long_expanded_variables_complete_essential_vars_1_locf_nocb_rm_hrtak)
+
+
+### finalized cohort:
+data_longi_long_expanded_variables_final_all_subjects <- data_longi_long_expanded_variables_complete_essential_vars_1_locf_nocb_rm_hrtak %>%
+  dplyr::select(-one_of(c('HEART', 'HRTAK'))) 
+count_N_subjects_and_instances(data_longi_long_expanded_variables_final_all_subjects)
+
+write.csv(data_longi_long_expanded_variables_final_all_subjects, file = paste0(work_dir,'/csv_files/data_longi_long_expanded_variables_between_y0_y15_all_subjects.csv'),row.names = F)

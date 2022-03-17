@@ -21,6 +21,7 @@ loading_dir = paste0(work_dir, '/csv_files')
 
 data_longi_long_for_analysis <- read.csv(paste0(work_dir,'/csv_files/data_longi_long_format_expanded_variables_removed_missing_data_2.csv'))
 
+data_longi_long_for_analysis_all <- read.csv(paste0(work_dir, '/csv_files/data_longi_long_expanded_variables_final_all_subjects_with_missing_data_up_to_y15_rm_hratk.csv'))
 
 #
 subjects_in_cohort <- read.csv(paste0(work_dir,'/csv_files/subjects_in_final_analysis_cohort.csv'))

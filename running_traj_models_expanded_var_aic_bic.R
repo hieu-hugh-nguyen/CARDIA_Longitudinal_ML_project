@@ -16,7 +16,7 @@ cat("\014")
 
 
 work_dir = 'U:/Hieu/CARDIA_longi_project'
-
+work_dir = '/Volumes/MR-Research$/Hieu/CARDIA_longi_project'
 setwd(work_dir)
 
 list.of.packages <- c("mlbench",'ggplot2','caret', 'dplyr', 'tibble', 'ROCR','parallelMap'
@@ -68,14 +68,8 @@ fixed_var = c('RACEBLACK','MALE','AGE_Y0')
 long_data_ts <- longi_data %>% dplyr::select(-one_of(c('event','time',fixed_var)))
 
 
-cluster_all_df <- longi_data %>% dplyr::select(one_of(c('ID','event','time',fixed_var)))
-cluster_all_df$ID <- cluster_all_df$ID %>% as.character()
 
-s3_all <- vector("list", 1)
-s3_all_with_NA <- vector("list", 1)
-
-
-
+### Get AIC and BIC plots for each longi variable: ############################# 
 for (longi_var_idx in 3:length(names(long_data_ts))){
   # longi_var_idx <- 32 # SBP
   longi_var <- names(long_data_ts)[longi_var_idx]
@@ -87,22 +81,6 @@ for (longi_var_idx in 3:length(names(long_data_ts))){
 
   longi_var_df_wide <- stats::reshape(longi_var_df, idvar = 'ID', timevar = 'exam_year', direction = 'wide')
  
-  # rearrange columns to be increasing in years:
-  # longi_var_df_wide <- longi_var_df_wide[,c('ID', paste0(longi_var,'.0')
-  #                                                ,paste0(longi_var,'.2')
-  #                                                ,paste0(longi_var,'.5')
-  #                                                ,paste0(longi_var,'.7')
-  #                                                ,paste0(longi_var,'.10')
-  #                                                ,paste0(longi_var,'.15'))
-  #                                             ]
-
-  # subject_spec_median <- rowMedians(as.matrix(longi_var_df_wide[,2:ncol(longi_var_df_wide)]), na.rm = TRUE)
-  # longi_var_df_wide_normalized <- cbind(longi_var_df_wide$ID, longi_var_df_wide[,2:ncol(longi_var_df_wide)]-subject_spec_median)
-  # names(longi_var_df_wide_normalized) <- names(longi_var_df_wide)
-
-  # longi_var_df_wide <- longi_var_df_wide_normalized
-  
-  
   if (longi_var == 'ARMCI'){
     longi_var_df_wide[longi_var_df_wide == 0] <- NA
   }
@@ -120,53 +98,158 @@ for (longi_var_idx in 3:length(names(long_data_ts))){
   if(!is.null(s1)){
     s2 <- step2factors(s1)
     #s3 <- step3clusters(s2)
-    s3 <- step3clusters(s2, criteria= 'gap')
-    #s3_all_criteria <- step3clusters(s2, criteria= 'all')
     
-    # library(NbClust)
-    # diss_matrix<- dist(s2$factors, method = "euclidean", diag=FALSE)
-    # 
-    # s3_gap <- NbClust(data = s2$factors %>% as.matrix(), diss = diss_matrix, distance = NULL
-    #                   , index= 'gap', method = 'kmeans', , min.nc=2, max.nc=6)
-    # NbClust(data, diss=diss_matrix, distance = NULL
-    #         method = "ward.D2", index = "all") 
     
-    s3$clust.distr
-    s3_all[[paste0(longi_var, '_s3')]] <- s3
+    kmeansAIC <- function(fit){
+      
+      m = ncol(fit$centers) 
+      k = nrow(fit$centers)
+      D = fit$tot.withinss
+      return(D + 2*m*k)
+      
+    } 
+    # source: https://bgstieber.github.io/post/an-introduction-to-the-kmeans-algorithm/ 
+    kmeansBIC <- function(fit){
+      m = ncol(fit$centers) 
+      n = length(fit$cluster)
+      k = nrow(fit$centers)
+      D = fit$tot.withinss
+      return(D + log(n) * m * k) # using log(n) instead of 2, penalize model complexity
+    }
+    
+    
+    kmeans_aic_bic <- function(data, center_range, iter.max, nstart, plot = TRUE){
+      
+      #fit kmeans for each center
+      all_kmeans <- lapply(center_range, 
+                           FUN = function(k) 
+                             kmeans(data, center = k, iter.max = iter.max, nstart = nstart))
+      
+      #extract AIC from each
+      all_aic <- sapply(all_kmeans, kmeansAIC)
+      #extract BIC from each
+      all_bic <- sapply(all_kmeans, kmeansBIC)
+      #extract tot.withinss
+      all_wss <- sapply(all_kmeans, FUN = function(fit) fit$tot.withinss)
+      #extract between ss
+      btwn_ss <- sapply(all_kmeans, FUN = function(fit) fit$betweenss)
+      #extract totall sum of squares
+      tot_ss <- all_kmeans[[1]]$totss
+      #put in data.frame
+      clust_res <- 
+        data.frame('Clusters' = center_range, 
+                   'AIC' = all_aic, 
+                   'BIC' = all_bic, 
+                   'WSS' = all_wss,
+                   'BSS' = btwn_ss,
+                   'TSS' = tot_ss)
+      #plot or no plot?
+      if(plot){
+        pdf(paste0(work_dir,"/figures/", longi_var, "_AIC_BIC_plot.pdf"),         # File name
+            width = 8, height = 7, # Width and height in inches
+            bg = "white",          # Background color
+            colormodel = "cmyk",    # Color model (cmyk is required for most publications)
+            paper = "A4")
+        
+        par(mfrow = c(2,2))
+        with(clust_res,{
+          plot(Clusters, AIC)
+          plot(Clusters, BIC)
+          plot(Clusters, WSS, ylab = 'Within Cluster SSE')
+          plot(Clusters, BSS / TSS, ylab = 'Prop of Var. Explained')
+          
+        dev.off() 
+        
+        })
+      }
+      
+      return(clust_res)
+    }
+    
+    var_oi_clust <-kmeans_aic_bic(data = s2$factors[-1], center_range = 2:20, iter.max = 20, nstart = 25)
+  }}
+
+
+
+
+
+### Examine the AIC-BIC plots for each longi marker and decide on the number of clusters ##########
+
+
+aic_bic_n_clust_list <- list() 
+aic_bic_n_clust_list[['SBP']] <- 7
+aic_bic_n_clust_list[['PSTYR']] <- 5
+aic_bic_n_clust_list[['PSTYR']] <- 5
+aic_bic_n_clust_list[['DBP']] <- 7
+aic_bic_n_clust_list[['WST']] <- 8
+aic_bic_n_clust_list[['WGT']] <- 6
+aic_bic_n_clust_list[['PULSE']] <- 10
+aic_bic_n_clust_list[['NTRIG']] <- 6
+aic_bic_n_clust_list[['LDL']] <- 8
+aic_bic_n_clust_list[['HDL']] <- 8
+aic_bic_n_clust_list[['GLU']] <- 8
+aic_bic_n_clust_list[['ED']] <- 6
+aic_bic_n_clust_list[['DFPAY']] <- 7
+aic_bic_n_clust_list[['CHOL']] <- 8
+aic_bic_n_clust_list[['BMI']] <- 6
+aic_bic_n_clust_list[['ARMCI']] <- 7
+
+
+
+
+# cluster and assign memberships with the optimal number of clusters:
+
+cluster_all_df <- longi_data %>% dplyr::select(one_of(c('ID','event','time',fixed_var))) %>% 
+  dplyr::filter(!duplicated(ID, fromLast=TRUE)) %>% 
+  cluster_all_df$ID <- cluster_all_df$ID %>% as.character()
+
+
+for (longi_var_idx in 3:length(names(long_data_ts))){
+  # longi_var_idx <- 32 # SBP
+  longi_var <- names(long_data_ts)[longi_var_idx]
+  print(paste0('Variable number: ', longi_var_idx -3+1, ' -- Variable name: ', longi_var))
+  
+  
+  longi_var_df <- long_data_ts %>% dplyr::select(c('ID', 'exam_year', longi_var))
+  longi_var_df$exam_year = longi_var_df$exam_year %>% as.numeric()
+  
+  longi_var_df_wide <- stats::reshape(longi_var_df, idvar = 'ID', timevar = 'exam_year', direction = 'wide')
+  
+
+  
+  if (longi_var == 'ARMCI'){
+    longi_var_df_wide[longi_var_df_wide == 0] <- NA
+  }
+  
+  longi_var_df_wide_locf <- setNames(data.frame(t(longi_var_df_wide[,-1])), longi_var_df_wide[,1]) %>% 
+    tidyr::fill(names(.), .direction = 'down') %>% tidyr::fill(names(.), .direction = 'up') %>% t() %>%
+    data.frame() %>% tibble::rownames_to_column("ID")
+  
+  
+  s1 <- NULL  
+  tryCatch({
+    s1 <- step1measures(longi_var_df_wide_locf, traj_data_time, ID = TRUE)
+  }, error=function(e){cat("ERROR :",conditionMessage(e), "\n")})
+  
+  if(!is.null(s1)){
+    s2 <- step2factors(s1)
+
+    var_oi_opt_kmeans <- kmeans(s2$factors[-1], centers = aic_bic_n_clust_list[[longi_var]], nstart = 50, iter.max = 50)
+    cluster_assign <- clue::cl_predict(var_oi_opt_kmeans, s2$factors[-1])
+    cluster_assign_df <- data.frame('ID' = s2$factors$ID
+                                    , 'cluster' = cluster_assign %>% as.numeric())
     
     # extract cluster assignments for this longi variable then merge with other data:
-    cluster_assign_df <- s3$clusters 
     cluster_assign_df[paste0(longi_var, '_cluster')] <- cluster_assign_df$cluster
     cluster_assign_df$ID <- cluster_assign_df$ID %>% as.character()
     cluster_all_df <- cluster_all_df %>% inner_join(cluster_assign_df %>% dplyr::select(c('ID', paste0(longi_var, '_cluster'))), by = 'ID')
-    
   }
-  else{
-    s3_all[[paste0(longi_var, '_s3')]] <- NULL
-  }
-  
-
-  s1_with_NA <- NULL  
-  tryCatch({
-    s1_with_NA <- step1measures(longi_var_df_wide, traj_data_time, ID = TRUE)
-    s2_with_NA=step2factors(s1_with_NA)
-    s3_with_NA=step3clusters(s2_with_NA, criteria= 'gap')
-    # s3_with_NA$clust.distr
-    # assign(paste0(longi_var, '_s3'), s3_with_NA)
-    s3_all_with_NA[[paste0(longi_var, '_s3')]] <- s3_with_NA
-  }, error=function(e){cat("ERROR :",conditionMessage(e), "\n")})
-  
- 
-  
   
 }
 
 var_clustered <- names(cluster_all_df %>% dplyr::select(-one_of(c('ID', 'event', 'time', fixed_var))))
 
-write.csv(cluster_all_df, file = paste0(work_dir, '/csv_files/proc_traj_cluster_assignments_gap_3.csv'), row.names = FALSE)
-
-save(s3_all, file = paste0(work_dir, '/rdata_files/proc_traj_s3_object_gap_3.RData'))
-save(s3_all_with_NA, file = paste0(work_dir, '/rdata_files/proc_traj_s3_object_with_NA_gap_3.RData'))
+write.csv(cluster_all_df, file = paste0(work_dir, '/csv_files/proc_traj_cluster_assignments_aic_bic.csv'), row.names = FALSE)
 
 
 # frequency table of cluster assignments:
@@ -190,20 +273,12 @@ cluster_assign_freq_table <- apply(cluster_all_df %>% dplyr::select(-one_of(c('e
 
 
 
-
-
-# s3_load <- get(load(paste0(work_dir, '/rdata_files/proc_traj_s3_object_gap_3.RData')))
-# plotCombTraj(s3_load$SBP_s3)
-# s3_with_NA_load <- get(load(paste0(work_dir, '/rdata_files/proc_traj_s3_object_with_NA_gap_3.RData')))
-# plotCombTraj(s3_with_NA_load$SBP_s3)
-
-
 ##### merge with data Y15 ###########################################################
 
 # load the dataset
 loading_dir = paste0(work_dir, '/csv_files')
 
-cluster_all_df <- read.csv(paste0(work_dir, '/csv_files/proc_traj_cluster_assignments_gap_3.csv'))
+cluster_all_df <- read.csv(paste0(work_dir, '/csv_files/proc_traj_cluster_assignments_aic_bic.csv'))
 
 data_longi_long_for_analysis <- read.csv(paste0(work_dir,'/csv_files/data_longi_long_format_expanded_variables_removed_missing_data_2.csv'))
 
@@ -294,7 +369,7 @@ for (fold in 1:nfolds){
   test_data$ID <- NULL
   
   
-  model_name <- 'cox_expanded_var_traj_only_gap'
+  model_name <- 'cox_expanded_var_traj_only_aic_bic'
   gc()
   main_dir <- paste0(work_dir, '/rdata_files')
   sub_dir <- paste0(model_name, '_fold_',fold)
@@ -375,7 +450,7 @@ for (fold in 1:nfolds){
   test_data$ID <- NULL
   
   
-  model_name <- 'lasso_expanded_var_traj_only_gap'
+  model_name <- 'lasso_expanded_var_traj_only_aic_bic'
   gc()
   main_dir <- paste0(work_dir, '/rdata_files')
   sub_dir <- paste0(model_name, '_fold_',fold)
@@ -454,7 +529,7 @@ for (fold in 1:nfolds){
   test_data$ID <- NULL
   
   
-  model_name <- 'rsf_expanded_var_traj_only_gap'
+  model_name <- 'rsf_expanded_var_traj_only_aic_bic'
   gc()
   main_dir <- paste0(work_dir, '/rdata_files')
   sub_dir <- paste0(model_name, '_fold_',fold)
@@ -539,80 +614,3 @@ for (fold in 1:nfolds){
   
 }
 
-
-
-
-
-
-
-# 
-# 
-# ### cFOREST MODEL ###################################
-# for (fold in 1:nfolds){
-#   # Training and fitting model:
-#   trainingid <- na.omit(c(trainingid_all[,fold], validationid_all[,fold]))
-#   train_data <- data %>% filter(ID %in% trainingid)
-#   test_data <- data %>% filter((ID %in% testingid_all[,fold])) 
-#   train_id <- train_data$ID
-#   test_id <- test_data$ID
-#   train_data$ID <- NULL
-#   test_data$ID <- NULL
-#   
-#   
-#   model_name <- 'cForest_expanded_var_traj_plus_data_y15'
-#   gc()
-#   main_dir <- paste0(work_dir, '/rdata_files')
-#   sub_dir <- paste0(model_name, '_fold_',fold)
-#   
-#   if(!dir.exists(file.path(main_dir, sub_dir))){
-#     createDir(main_dir, sub_dir)
-#   }
-#   set.seed(seed)
-#   model <- running_cForest(train_data)
-#   saving_dir <- file.path(main_dir, sub_dir)
-#   save(model, file = paste0(saving_dir,'/', model_name, '.RData'))
-#   
-#   
-#   
-#   # Test set performance: ###################################################################
-#   loading.dir <- paste0(work_dir, '/rdata_files/', model_name, '_fold_', fold)
-#   saving.dir <- loading.dir
-#   trained_data <- train_data
-#   trained_model <- model
-#   
-#   tryCatch({
-#     
-#     # probability of having had the disease:
-#     prob_risk_test <- predictRisk.cForest(trained_model
-#                                           , newdata = test_data
-#                                           , times = eval_times
-#     )
-#     prob_risk_test_with_ID <- cbind(test_id, prob_risk_test)
-#     save(prob_risk_test_with_ID
-#          , file = paste0(saving.dir, '/prob_risk_test_set_with_ID.RData'))
-#     
-#     
-#     
-#     prob_risk_test[is.na(prob_risk_test)] = 0
-#     performance_testset = eval_performance3(prob.risk.test.set = prob_risk_test
-#                                             , test.data = test_data
-#                                             , trained.data = trained_data
-#                                             , eval.times = eval_times
-#     )
-#     save(performance_testset
-#          , file = paste0(saving.dir, '/performance_testset.RData'))
-#     
-#     
-#     
-#     prob_risk_train <- predictRisk.cForest(trained_model
-#                                            , newdata = trained_data
-#                                            , times = eval_times
-#     )
-#     prob_risk_train_with_ID <- cbind(train_id, prob_risk_train)
-#     save(prob_risk_train_with_ID
-#          , file = paste0(saving.dir, '/prob_risk_train_set_with_ID.RData'))
-#     
-#   }, error=function(e){cat("ERROR :",conditionMessage(e), "\n")})
-#   
-# }
-#   
