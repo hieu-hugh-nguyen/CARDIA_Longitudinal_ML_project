@@ -4,6 +4,8 @@ cat("\024")
 
 # set working directory: 
 work_dir = 'U:/Hieu/CARDIA_longi_project'
+
+source_dir <- paste0(work_dir, '/code/git_code/snippet')
 source(paste0(source_dir,'/normalize_var_importance.R'))
 source(paste0(source_dir,'/createDir.R'))
 
@@ -12,7 +14,9 @@ setwd(work_dir)
 
 ## average permutation VIMP:
 
-model_name = 'rsf_expanded_var_concat'
+#model_name = 'rsf_expanded_var_traj_cont_n_binary_var_only_trcovw'
+model_name = 'rsf_expanded_var_traj_cont_n_binary_var_only_trcovw_6'
+#model_name = 'rsf_expanded_var_traj_trcovw_plus_some_y15_data_6'
 nfold = 10
 
 fold = 1
@@ -46,7 +50,7 @@ write.csv(feature.ranking.median[,c('index','var.name','Median_vimp','normalized
 
 ## average min depth:
 
-model_name = 'rsf_expanded_var_concat'
+model_name = 'rsf_expanded_var_traj_cont_n_binary_var_only_trcovw_6'
 nfold = 10
 
 fold = 1

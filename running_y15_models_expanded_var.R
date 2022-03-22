@@ -68,7 +68,7 @@ data <- data %>% mutate(AGE_Y15 = AGE_Y0 +15) %>% dplyr::select(-AGE_Y0)
 #Check if there is any character column, then delete them to make sure all data is numeric:
 nums <- unlist(lapply(data, is.character))  
 data[,nums]<-NULL
-
+# write.csv(data, file = paste0(work_dir,'/csv_files/data_for_y15_models.csv'), row.names = FALSE)
 
 
 # load training IDs:

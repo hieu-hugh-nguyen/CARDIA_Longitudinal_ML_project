@@ -16,6 +16,8 @@ cat("\014")
 
 
 work_dir = 'U:/Hieu/CARDIA_longi_project'
+# work_dir = '/Volumes/MR-Research$/Hieu/CARDIA_longi_project'
+
 
 setwd(work_dir)
 
@@ -267,10 +269,41 @@ eval_times <- seq(1, endpt, by = 1)
 
 # data <- data_and_cluster_df
 
-data <- cluster_all_df %>% 
+
+# data <- cluster_all_df %>%
+#   dplyr::filter(!duplicated(ID, fromLast=TRUE)) %>%
+#   dplyr::mutate(AGE_Y15 = AGE_Y0 +15) %>% dplyr::select(-AGE_Y0) %>%
+#   dplyr::mutate(time = time -15)
+
+# data <- cluster_all_df %>%
+#   dplyr::filter(!duplicated(ID, fromLast=TRUE)) %>%
+#   dplyr::mutate(AGE_Y15 = AGE_Y0 +15) %>% dplyr::select(-AGE_Y0) %>%
+#   dplyr::mutate(time = time -15) %>%
+#   inner_join(data_y15_truncated_tte %>%
+#                dplyr::select(one_of(c('ID', 'CHNOW', 'ASMA', 'PATCK', 'KIDNY', 'LIVER', 'MENTL'))) %>%
+#                dplyr::mutate(ID = as.character(ID))
+#               , by = 'ID') %>%
+#   dplyr::select(-one_of(c('ASMA_cluster', 'PATCK_cluster', 'KIDNY_cluster', 'LIVER_cluster', 'MENTL_cluster'))) %>%
+#   dplyr::rename(ASMA_cluster = ASMA) %>% dplyr::rename(PATCK_cluster = PATCK) %>%
+#   dplyr::rename(KIDNY_cluster = KIDNY) %>% dplyr::rename(LIVER_cluster = LIVER) %>%
+#   dplyr::rename(MENTL_cluster = MENTL) %>%
+#   dplyr::rename(CHNOW_cluster = CHNOW)
+
+# for version 6:
+data <- cluster_all_df %>%
   dplyr::filter(!duplicated(ID, fromLast=TRUE)) %>%
   dplyr::mutate(AGE_Y15 = AGE_Y0 +15) %>% dplyr::select(-AGE_Y0) %>%
-  dplyr::mutate(time = time -15)
+  dplyr::mutate(time = time -15) %>%
+  inner_join(data_y15_truncated_tte %>%
+               dplyr::select(one_of(c('ID', 'CHNOW', 'PATCK', 'LIVER'))) %>%
+               dplyr::mutate(ID = as.character(ID))
+             , by = 'ID') %>%
+  dplyr::select(-one_of(c('PATCK_cluster', 'LIVER_cluster'))) %>%
+  dplyr::rename(PATCK_cluster = PATCK) %>%
+  dplyr::rename(LIVER_cluster = LIVER) %>%
+  dplyr::rename(CHNOW_cluster = CHNOW)
+
+write.csv(data, file = paste0(work_dir, '/csv_files','/data_for_traj_trcovw_6_model.csv'), row.names = F)
 
 
 ### COX-PH MODEL ###################################
@@ -447,7 +480,8 @@ for (fold in 1:nfolds){
   test_data$ID <- NULL
   
   
-  model_name <- 'rsf_expanded_var_traj_cont_n_binary_var_only_trcovw_2'
+#  model_name <- 'rsf_expanded_var_traj_cont_n_binary_var_only_trcovw_5'
+  model_name <- 'rsf_expanded_var_traj_cont_n_binary_var_only_trcovw_6'
   gc()
   main_dir <- paste0(work_dir, '/rdata_files')
   sub_dir <- paste0(model_name, '_fold_',fold)
@@ -458,7 +492,7 @@ for (fold in 1:nfolds){
   set.seed(seed)
   # model <- running_rsf(train_data)
   model= rfsrc(Surv(time,event)~., data = train_data 
-               , ntree = 1001
+               , ntree = 10001
               # , importance = 'permute'
                , splitrule = 'logrank' #there is also logrankrandom, logrankscore, and conserve splitting  
   )

@@ -2,6 +2,7 @@ rm(list=ls()) #Clear all
 cat("\014")
 
 work_dir = 'U:/Hieu/CARDIA_longi_project'
+# work_dir = '/Volumes/MR-Research$/Hieu/CARDIA_longi_project'
 require(dplyr)
 require(ggplot2)
 require(reshape2)
@@ -116,7 +117,12 @@ rsf_traj_trcovw_plus_y15_data_df_4 <- auc_df_from_performance_testset('rsf_expan
 rsf_traj_trcovw_plus_y15_data_df_5 <- auc_df_from_performance_testset('rsf_expanded_var_traj_trcovw_plus_some_y15_data_5')
 rsf_traj_trcovw_plus_y15_data_df_6 <- auc_df_from_performance_testset('rsf_expanded_var_traj_trcovw_plus_some_y15_data_6')
 
-rsf_traj_cont_n_binary_var_only_trcovw <- auc_df_from_performance_testset('rsf_expanded_var_traj_cont_n_binary_var_only_trcovw')
+# rsf_traj_cont_n_binary_var_only_trcovw <- auc_df_from_performance_testset('rsf_expanded_var_traj_cont_n_binary_var_only_trcovw')
+# rsf_traj_cont_n_binary_var_only_trcovw_3 <- auc_df_from_performance_testset('rsf_expanded_var_traj_cont_n_binary_var_only_trcovw_3')
+# rsf_traj_cont_n_binary_var_only_trcovw_4 <- auc_df_from_performance_testset('rsf_expanded_var_traj_cont_n_binary_var_only_trcovw_4')
+# rsf_traj_cont_n_binary_var_only_trcovw_5 <- auc_df_from_performance_testset('rsf_expanded_var_traj_cont_n_binary_var_only_trcovw_5')
+rsf_traj_cont_n_binary_var_only_trcovw_6 <- auc_df_from_performance_testset('rsf_expanded_var_traj_cont_n_binary_var_only_trcovw_6')
+
 # rsf_traj_cont_n_binary_var_only_trcovw_2 <- auc_df_from_performance_testset('rsf_expanded_var_traj_cont_n_binary_var_only_trcovw_2')
 # cox_traj_cont_n_binary_var_only_trcovw <- auc_df_from_performance_testset('cox_expanded_var_traj_cont_n_binary_var_only_trcovw')
 # lasso_traj_cont_n_binary_var_only_trcovw <- auc_df_from_performance_testset('lasso_expanded_var_traj_cont_n_binary_var_only_trcovw')
@@ -125,7 +131,7 @@ rsf_traj_cont_n_binary_var_only_trcovw <- auc_df_from_performance_testset('rsf_e
 rsf_y15_expand_var_df_2_1 <- auc_df_from_performance_testset('rsf_expanded_var_y15_2_1')
 
 cox_y15_expand_var_df_2 <- auc_df_from_performance_testset('cox_expanded_var_y15_2')
-cForest_y15_expand_var_df_2 <- auc_df_from_performance_testset('cForest_expanded_var_y15_2')
+# cForest_y15_expand_var_df_2 <- auc_df_from_performance_testset('cForest_expanded_var_y15_2')
 cox_y0_expand_var_df_2 <- auc_df_from_performance_testset('cox_expanded_var_baseline_no_truncate_2')
 
 
@@ -172,7 +178,9 @@ df_for_plot = data.frame(eval_times
                      # , rsf_traj_trcovw_df$median 
                      
                      # , rsf_traj_trcovw_plus_y15_data_df_6$median
-                     , rsf_traj_cont_n_binary_var_only_trcovw$median
+                     #, rsf_traj_cont_n_binary_var_only_trcovw$median
+                    , rsf_traj_cont_n_binary_var_only_trcovw_6$median
+                    
                       #, rsf_traj_only_expand_var_df_gap$median
 
                      # , rsf_traj_expand_var_df_gap_2$median
@@ -333,7 +341,7 @@ ggsave(filename = 'median_AUC_over_time_figure.tif', path = paste0(work_dir, '/f
 
 
 
-
+### Same plot but using mean instead of median: ######################################
 eval_times <- seq(1,17, 1)
 
 df_for_plot = data.frame(eval_times
