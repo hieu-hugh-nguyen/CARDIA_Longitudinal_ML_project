@@ -24,7 +24,10 @@ model_list = c(
   # , 'lasso_expanded_var_tsfeatures_plus_data_y15_rm_correlation'
   # 
   # , 'dynamic_deephit_expanded_var_y15_2_2'
-  'rsf_expanded_var_traj_plus_data_y15_gap'
+ # 'rsf_expanded_var_traj_plus_data_y15_gap'
+  
+  'rsf_expanded_var_traj_cont_n_binary_var_only_trcovw_6'
+  , 'rsf_expanded_var_concat'
   
   # , 'rsf_expanded_var_y15_2_1'
   # , 'cox_expanded_var_y15_2'

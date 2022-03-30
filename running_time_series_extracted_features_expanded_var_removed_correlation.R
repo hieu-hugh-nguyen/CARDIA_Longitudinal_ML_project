@@ -4,8 +4,8 @@ rm(list=ls()) #Clear all
 cat("\014")
 
 # set working directory: 
-# work_dir = 'U:/Hieu/CARDIA_longi_project'
-work_dir = '/Volumes/MR-Research$/Hieu/CARDIA_longi_project'
+work_dir = 'U:/Hieu/CARDIA_longi_project'
+# work_dir = '/Volumes/MR-Research$/Hieu/CARDIA_longi_project'
 
 setwd(work_dir)
 
@@ -129,13 +129,8 @@ loading_dir = paste0(work_dir, '/csv_files')
 data_longi_long_for_analysis <- read.csv(paste0(work_dir,'/csv_files/data_longi_long_format_expanded_variables_removed_missing_data_2.csv'))
 data_longi_long_for_analysis$ID <- data_longi_long_for_analysis$ID %>% as.character()
 
-#'/csv_files/data_longi_long_format_ascvd_risk_factors_with_missing_data.csv'
-#
 subjects_in_cohort <- read.csv(paste0(work_dir,'/csv_files/subjects_in_final_analysis_cohort.csv'))
 
-# data_longi_expanded_var_for_dynamic_deephit <- read.csv(paste0(work_dir, '/csv_files/data_longi_expanded_var_for_dynamic_deephit.csv'))
-# data_longi_expanded_var_for_dynamic_deephit$ID <- data_longi_expanded_var_for_dynamic_deephit$ID %>% as.character()
-# Does not have this ID: 204337013307
 
 
 
@@ -437,42 +432,6 @@ old_ts_features <- old_ts_features %>% dplyr::rename(ID = X)
 
 
 
-#' # load the dataset
-#' old_data_longi_long_for_analysis <- read.csv(paste0(work_dir,'/csv_files/data_longi_long_format_ascvd_risk_factors_removed_missing_data.csv'))
-#' #'/csv_files/data_longi_long_format_ascvd_risk_factors_with_missing_data.csv'
-#' #
-#' subjects_in_cohort <- read.csv(paste0(work_dir,'/csv_files/subjects_in_final_analysis_cohort.csv'))
-#' 
-#' old_data_longi_long_up_to_y15 <- old_data_longi_long_for_analysis %>% dplyr::filter(exam_year <=15)
-#' old_data_longi_analysis_cohort <- old_data_longi_long_up_to_y15 %>% dplyr::filter(ID %in% subjects_in_cohort[[1]])
-# 
-# # baseline data:
-# # data_at_baseline <- data_longi_long_for_analysis %>% dplyr::filter(!duplicated(ID, fromLast=FALSE)) 
-# old_data_at_baseline <- old_data_longi_analysis_cohort %>% dplyr::filter(ID %in% subjects_in_cohort[[1]]) %>% dplyr::filter(exam_year == 0)
-# # most recent data at landmark time (y15):
-# old_data_y15 <- old_data_longi_analysis_cohort %>% dplyr::filter(ID %in% subjects_in_cohort[[1]]) %>% dplyr::filter(exam_year == 15)
-# 
-# # truncate time to make start time at y15 (to avoid 15 years of immortal time):
-# old_data_y15_truncated_tte <- old_data_y15 %>% 
-#   mutate(time_te_in_yrs = time_te_in_yrs -15) %>% 
-#   dplyr::select(-time) %>% dplyr::filter(time_te_in_yrs >0) %>%
-#   dplyr::rename(event = status) %>% dplyr::rename(time = time_te_in_yrs) %>%
-#   dplyr::select(-exam_year)
-# 
-# 
-# 
-# old_data <- old_data_y15_truncated_tte
-# # update age variable to be at landmark time:
-# old_data <- old_data %>% mutate(AGE_Y15 = AGE_Y0 +15) %>% dplyr::select(-AGE_Y0)
-# 
-# 
-# # data with ts_features alone:
-# 
-# old_data <- old_data %>% dplyr::select('ID','event','time','AGE_Y15','MALE','RACEBLACK') %>%
-#   left_join(old_ts_features, by = 'ID')
-# 
-# # data_ts_ascvd_var <- read.csv(paste0(work_dir,'/csv_files/data_for_training_tsfeatures_models.csv'))
-
 data_ts_ascvd_var <- old_ts_features
 
 data_ts_ascvd_var$ID <- as.character(data_ts_ascvd_var$ID)
@@ -487,7 +446,7 @@ merged_data <- new_data %>% inner_join(data_ts_ascvd_var_non_overlap_with_ID, by
 
 data <- merged_data
 
-for (fold in 2:nfolds){
+for (fold in 1:nfolds){
 
   ## fold = 1
   trainingid <- na.omit(c(trainingid_all[,fold], validationid_all[,fold]))
@@ -499,7 +458,7 @@ for (fold in 2:nfolds){
   test_data$ID <- NULL
 
 
-  model_name <- 'rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15_2_4_10000tree'
+  model_name <- 'rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15_2_4'
   gc()
   main_dir <- paste0(work_dir, '/rdata_files')
   sub_dir <- paste0(model_name, '_fold_',fold)
@@ -511,7 +470,7 @@ for (fold in 2:nfolds){
   set.seed(seed)
   # model <- running_rsf(train_data)
   model <- rfsrc(Surv(time,event)~., data = train_data 
-            , ntree = 10001
+            , ntree = 1001
             , splitrule = 'logrank' #there is also logrankrandom, logrankscore, and conserve splitting  
   )
   

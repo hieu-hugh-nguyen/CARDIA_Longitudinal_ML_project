@@ -92,7 +92,7 @@ for (longi_var_idx in 3:length(var_to_be_clustered)){
   longi_var <- var_to_be_clustered[longi_var_idx]
   print(paste0('Variable number: ', longi_var_idx -3+1, ' -- Variable name: ', longi_var))
         
-  
+#  longi_var <- 'GLU'
   longi_var_df <- long_data_ts %>% dplyr::select(c('ID', 'exam_year', longi_var))
   longi_var_df$exam_year = longi_var_df$exam_year %>% as.numeric()
 

@@ -5,6 +5,8 @@
 
 # set working directory: 
 work_dir = 'U:/Hieu/CARDIA_longi_project'
+work_dir = '/Volumes/MR-Research$/Hieu/CARDIA_longi_project'
+
 setwd(work_dir)
 
 
@@ -135,76 +137,28 @@ St <- surv.object$surv[pos]
 #eval_times_for_iauc =seq(6,11,1)
 
 #eval_times_for_iauc =seq(3,10,1)
-# eval_times_for_iauc =seq(5,endpt,1)
+eval_times_for_iauc =seq(5,endpt,1)
 #eval_times_for_iauc =seq(10,endpt,1)
 
 
-#model_name = 'rsf_ascvd_var_tsfeatures_plus_data_y15_rm_correlation'
 
 model_list = c(
   ## model_name = 
-#  'rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15'
-  'rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15_2_4'
-  , 'lasso_expanded_var_tsfeatures_plus_data_y15_rm_correlation'
-  
-  , 'dynamic_deephit_expanded_var_y15_2_2'
-  
-  #, 'rsf_expanded_var_traj_plus_data_y15_gap'
-  
-  ,'rsf_expanded_var_traj_cont_n_binary_var_only_trcovw_6'
-  , 'rsf_expanded_var_concat'
-#  , 'cForest_expanded_var_traj_plus_data_y15'
-#  , 'cox_expanded_var_traj_plus_data_y15'
-#  , 'lasso_expanded_var_traj_plus_data_y15'
-  , 'rsf_expanded_var_y15_2_1'
-  , 'cox_expanded_var_y15_2'
-  , 'lasso_expanded_var_y15_2'
+  'rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15_black_only'
+  ,'rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15_white_only'
 
+  ,'rsf_expanded_var_traj_cont_n_binary_var_only_trcovw_black_only'
+  ,'rsf_expanded_var_traj_cont_n_binary_var_only_trcovw_white_only'
+  
 
-  , 'rsf_expanded_var_baseline_no_truncate_2'
-  , 'cox_expanded_var_baseline_no_truncate_2'
-  , 'lasso_expanded_var_baseline_no_truncate_2'
+  , 'rsf_expanded_var_concat_black_only'
+  , 'rsf_expanded_var_concat_white_only'
   
-  
-  
-  
-  # ,'rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15_2_4_10000tree'
-  
- # ,"rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15_2_10"
-#  , "rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15"
-#  ,"rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15_2_4_1"
-#  ,"rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15_2_4_2"
-#  ,"rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15_2_4_3"
-  
-  
-  
-#  ,"rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15_2_9"
-  
-  
-  
-#  ,'rsf_expanded_var_tsfeatures_plus_data_y15_2_3'
-  # 'rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15_2'
- # , 'rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15_2_1'
-#  ,'rsf_expanded_var_tsfeatures_plus_data_y15_2_1'
-#  , 'rsf_expanded_var_tsfeatures_plus_data_y15_2_1_reduced_var'
 
- # 'rsf_expanded_var_tsfeatures_plus_data_y15_2'
-
-  # 'dynamic_deephit_expanded_var_y15_2_3'
-#  'dynamic_deephit_expanded_var_y15_4_RNN_layers'
-  #  'rsf_expanded_var_tsfeatures_corr_rm'
-  # 'lasso_expanded_var_tsfeatures_plus_data_y15_rm_correlation'
-#  , 'cForest_expanded_var_tsfeatures_plus_data_y15_rm_correlation_2'
-# ,'rsf_expanded_var_tsfeatures_plus_data_y15_corr_rm'
-# , 'rsf_expanded_var_tsfeatures_plus_data_y15_crunchr'
-#,'rsf_expanded_var_tsfeatures_plus_data_y15_40_features'
-# ,'rsf_expanded_var_tsfeatures_plus_data_y15'
-#,'rsf_expanded_var_tsfeatures_plus_data_y15_rm_correlation'
+  , 'rsf_expanded_var_black_only'
+  , 'rsf_expanded_var_white_only'  
   
   
-# , 'rsf_expanded_var_data_y15_test'
-  #  , 'rsf_expanded_var_y15_2'
-#  , 'cForest_expanded_var_y15_2'
 )
 
 for(n in 1:length(model_list)){
@@ -216,14 +170,14 @@ for(n in 1:length(model_list)){
 }
 
 
-
-for(n in 1:length(model_list)){
-  print(paste0('IntAUC for model ', model_list[n], ':'))
-  print(print_ci_values(bootstrap_ci_median(na.omit(get_iAUC(auc_df_from_performance_testset(model_list[n])
-                                                      , St_ = St, nfolds = 10
-                                                      , eval_times_for_iauc_ = eval_times_for_iauc))), digits = 3))
-  cat('\n')
-}
+# 
+# for(n in 1:length(model_list)){
+#   print(paste0('IntAUC for model ', model_list[n], ':'))
+#   print(print_ci_values(bootstrap_ci_median(na.omit(get_iAUC(auc_df_from_performance_testset(model_list[n])
+#                                                       , St_ = St, nfolds = 10
+#                                                       , eval_times_for_iauc_ = eval_times_for_iauc))), digits = 3))
+#   cat('\n')
+# }
 
 
 

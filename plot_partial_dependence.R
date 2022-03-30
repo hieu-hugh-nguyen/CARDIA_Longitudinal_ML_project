@@ -80,16 +80,31 @@ plot_lowess_cat_var <- function(var){
   marginal_object_factor <- marginal_object
   marginal_object_factor[[var]] <- as.factor(marginal_object_factor[[var]])
   
+  cluster_ordered_colors = c('black', 'red', 'blue', 'green')
+  n_clusters <- length(unique(marginal_object_factor[[var]]))
+ 
+  
   plot_final <- ggplot(marginal_object_factor, aes(get(var), yhat)) + 
     geom_boxplot(outlier.shape = NA) +
     geom_rug(sides="b") + 
     coord_cartesian(ylim = c(0.85, 1)) +
     labs(y = '', x = '', title = var) +
     theme_minimal() +
-    # 
     theme(axis.title=element_blank()
-          ,plot.title = element_text(size=8,hjust = 0.5)
-  )
+          ,plot.title = element_text(size=8,hjust = 0.5))
+          
+  `%notin%` <- Negate(`%in%`)
+  if (var %notin%  c('RACEBLACK', 'MALE')){
+    if (n_clusters >= 4){
+      cluster_ordered_colors = c('blk', 'red', 'blu', 'grn')
+      
+      plot_final <- plot_final +
+        scale_x_discrete(labels = cluster_ordered_colors[1:n_clusters])
+    }else{
+    plot_final <- plot_final +
+      scale_x_discrete(labels = cluster_ordered_colors[1:n_clusters])     
+    }
+}
   return(plot_final)
 }
 
@@ -107,6 +122,7 @@ for (var_idx in 2:length(var_order)){
     lowess_plot_all_obj <- lowess_plot_all_obj +
       plot_lowess_cont_var(var_order[var_idx])   
   }
+  
   else{
     lowess_plot_all_obj <- lowess_plot_all_obj +
       plot_lowess_cat_var(var_order[var_idx])

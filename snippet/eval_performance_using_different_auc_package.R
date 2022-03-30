@@ -65,7 +65,7 @@ eval_performance2 = function(prob.risk.test.set, test.data, trained.data, eval.t
                              ,times = eval.times)
   iauc_uno = uno_auc$iauc
   # save:
-  saving.dir = loading.dir
+ # saving.dir = loading.dir
   performance = list(prob.risk, cind.obj, pec.obj, last.cindex, last.brier, roc, auc, uno_c, uno_auc
                      , iauc_uno)
   names(performance) = c('prob.risk.test.data', 'cind.obj', 'pec.obj', 'last.cindex', 'last.brier', 'roc', 'auc'
@@ -78,8 +78,8 @@ eval_performance2 = function(prob.risk.test.set, test.data, trained.data, eval.t
 # prob.surv = pec::predictSurvProb(trained.model, newdata = test.data, times = eval.times)
 
 
-eval_performance3 = function(prob.risk.test.set, test.data, trained.data, eval.times){
-  
+eval_performance3_5 = function(prob.risk.test.set, test.data, trained.data, eval.times){
+# corrected version of eval_performance3: changing test_data to test.data  
   require(riskRegression)
   require('survAUC')
   require('timeROC')
@@ -150,7 +150,7 @@ eval_performance3 = function(prob.risk.test.set, test.data, trained.data, eval.t
   
   # first compute the vector of survival probabilities for each eval time: 
   
-  surv.object <-survfit(Surv(test_data$time,test_data$event)~1) # first find the estimated survival probabilities at unique failure times
+  surv.object <-survfit(Surv(test.data$time,test.data$event)~1) # first find the estimated survival probabilities at unique failure times
   pos <- prodlim::sindex(jump.times=surv.object$time,eval.times=eval_times) # step function to locate the position of survival time matching with an eval_time
   St <- surv.object$surv[pos]
   
@@ -160,7 +160,7 @@ eval_performance3 = function(prob.risk.test.set, test.data, trained.data, eval.t
   NPV <- rep(NA, length(eval_times))
   F1 <- rep(NA, length(eval_times))
   MCC <- rep(NA, length(eval_times))
-  binary_cutpoint <- rep(NA, length(eval_times))
+  binary_cutpoint <- rep(0.5, length(eval_times))
   
   for (i in 1:length(eval_times)){
     roc_df_curr_time <- roc[[i]][['ROC']]$plotframe
@@ -169,10 +169,12 @@ eval_performance3 = function(prob.risk.test.set, test.data, trained.data, eval.t
     
     
     # i = 10
-    binary_cutpoint[i]= best_cutoff_curr_time # quantile(prob_risk_test[,i], probs = St[i])
+    if(!is.na(best_cutoff_curr_time)){
+      binary_cutpoint[i]= best_cutoff_curr_time
+    }
     classi_metrics_obj <-timeROC::SeSpPPVNPV(cutpoint= binary_cutpoint[i]
-                                    , T= test_data$time
-                                    , delta=test_data$event
+                                    , T= test.data$time
+                                    , delta=test.data$event
                                     , weighting="marginal"
                                     , marker=prob.risk.test.set[,i]
                                     , cause=1
@@ -197,7 +199,7 @@ eval_performance3 = function(prob.risk.test.set, test.data, trained.data, eval.t
   
 
   # save:
-  saving.dir = loading.dir
+#  saving.dir = loading.dir
   performance = list(prob.risk, cind.obj, pec.obj, last.cindex, last.brier, roc, auc, uno_c, uno_auc
                      , iauc_uno
                      , Sens, Spec, PPV, NPV, F1
@@ -217,6 +219,156 @@ eval_performance3 = function(prob.risk.test.set, test.data, trained.data, eval.t
                          , 'last.sens', 'last.spec', 'last.ppv', 'last.npv'
                          , 'last.f1', 'last.mcc'
                          )
+  return(performance)
+}
+
+
+
+
+
+
+
+
+
+eval_performance3 = function(prob.risk.test.set, test.data, trained.data, eval.times){
+
+  require(riskRegression)
+  require('survAUC')
+  require('timeROC')
+  
+  prob.risk = prob.risk.test.set
+  prob.surv = 1-prob.risk.test.set
+  # metrics of evaluation:
+  #c-index
+  cind.obj = pec::cindex(object = prob.surv,
+                         formula = Surv(time, event)~1,
+                         data = test.data,
+                         eval.times = eval.times, 
+                         splitMethod = 'none',
+                         cens.model = 'marginal')
+  #brier score: 
+  pec.obj = pec::pec(object = prob.surv,
+                     formula = Surv(time, event)~1,
+                     data = test.data,
+                     times = eval.times[-base::length(eval.times)],
+                     exact = F,
+                     splitMethod = 'none',
+                     cens.model = 'marginal')
+  
+  # c-index and Brier at a single time:
+  timepoint = 26 # 26 years
+  last.brier = sapply(pec.obj$AppErr,
+                      function(x) x[which(pec.obj$time == min(365.25*timepoint, max(pec.obj$time)))[1]])
+  last.cindex = sapply(cind.obj$AppCindex,
+                       function(x) x[which(cind.obj$time == min(365.25*timepoint, max(cind.obj$time)))[1]])
+  
+  # cumulative dynamic AUC and roc curve:
+  
+  roc = list()
+  auc = c()
+  for (timept in 1:(base::length(eval.times))){
+    # survivalROC.curve= survivalROC(Stime=test.data$time,
+    #                                status=test.data$event,
+    #                                marker = prob.risk[,timept],
+    #                                predict.time = eval.times[timept], method="KM")
+    dat = data.frame(event = test.data$event, time = test.data$time, absolute_risk = prob.risk[,timept])
+    
+    riskRegression.roc = riskRegression::Score(list("model"=dat$absolute_risk)
+                                               ,formula=Surv(time,event)~1
+                                               ,data=dat
+                                               ,conf.int=FALSE
+                                               ,times=eval_times[timept]
+                                               ,plots = c('ROC','calibration'))
+    
+    auc = append(auc, riskRegression.roc$AUC$score$AUC)
+    roc = append(roc, list(riskRegression.roc))
+  }
+  # uno c-index:
+  # lp = predict(trained.model, type = 'lp')$predicted
+  # lp.new = predict(trained.model, newdata = test.data)$predicted
+  Surv.rsp = Surv(trained.data$time, trained.data$event)
+  Surv.rsp.new = Surv(test.data$time, test.data$event)
+  uno_c = survAUC::UnoC(Surv.rsp = Surv.rsp, Surv.rsp.new = Surv.rsp.new
+                        ,lpnew = prob.risk[,round(ncol(prob.risk)/2)])
+  # uno AUC (similar trend to pec cindex, not exact though?)
+  uno_auc = survAUC::AUC.uno(Surv.rsp = Surv.rsp, Surv.rsp.new = Surv.rsp.new
+                             ,lpnew = prob.risk[,round(ncol(prob.risk)/2)]
+                             ,times = eval.times)
+  iauc_uno = uno_auc$iauc
+  
+  
+  
+  ### PPV, Sens, Spec: ####################
+  
+  # first compute the vector of survival probabilities for each eval time: 
+  
+  surv.object <-survfit(Surv(test_data$time,test_data$event)~1) # first find the estimated survival probabilities at unique failure times
+  pos <- prodlim::sindex(jump.times=surv.object$time,eval.times=eval_times) # step function to locate the position of survival time matching with an eval_time
+  St <- surv.object$surv[pos]
+  
+  Sens <- rep(NA, length(eval_times))
+  Spec <- rep(NA, length(eval_times))
+  PPV <- rep(NA, length(eval_times))
+  NPV <- rep(NA, length(eval_times))
+  F1 <- rep(NA, length(eval_times))
+  MCC <- rep(NA, length(eval_times))
+  binary_cutpoint <- rep(NA, length(eval_times))
+  
+  for (i in 1:length(eval_times)){
+    roc_df_curr_time <- roc[[i]][['ROC']]$plotframe
+    roc_df_curr_time$youden_index <-  roc_df_curr_time$TPR + 1- roc_df_curr_time$FPR - 1
+    best_cutoff_curr_time <- roc_df_curr_time$risk[which(roc_df_curr_time$youden_index == max(roc_df_curr_time$youden_index))][1]
+    
+    
+    # i = 10
+
+    classi_metrics_obj <-timeROC::SeSpPPVNPV(cutpoint= binary_cutpoint[i]
+                                             , T= test_data$time
+                                             , delta=test_data$event
+                                             , weighting="marginal"
+                                             , marker=prob.risk.test.set[,i]
+                                             , cause=1
+                                             , times=eval_times[i]
+                                             , iid=TRUE)
+    
+    Sens[i] <- classi_metrics_obj$TP[2] %>% as.numeric()
+    Spec[i] <- 1-classi_metrics_obj$FP[2] %>% as.numeric()
+    PPV[i] <- classi_metrics_obj$PPV[2] %>% as.numeric()
+    NPV[i] <- classi_metrics_obj$NPV[2] %>% as.numeric()
+    F1[i] <- 2*(PPV[i]*Sens[i])/(PPV[i]+Sens[i])
+    
+    TPR <- Sens[i]
+    TNR <- Spec[i]
+    FNR <- 1- Sens[i] # False Negative Rate
+    FPR <- 1- Spec[i] # False Negative Rate
+    FDR <- 1-PPV[i] # False Discovery Rate
+    FOR <- 1- NPV[i] # False Omission Rate
+    MCC[i] <- sqrt(PPV[i]*TPR*TNR*NPV[i]) - sqrt(FDR*FNR*FPR*FOR) #Matthews correlation coefficient
+  }    
+  
+  
+  
+  # save:
+#  saving.dir = loading.dir
+  performance = list(prob.risk, cind.obj, pec.obj, last.cindex, last.brier, roc, auc, uno_c, uno_auc
+                     , iauc_uno
+                     , Sens, Spec, PPV, NPV, F1
+                     , binary_cutpoint
+                     , St
+                     , Sens[length(Sens)]
+                     , Spec[length(Spec)]
+                     , PPV[length(PPV)]
+                     , NPV[length(NPV)]
+                     , F1[length(F1)]
+                     , MCC[length(MCC)]
+  )
+  names(performance) = c('prob.risk.test.data', 'cind.obj', 'pec.obj', 'last.cindex', 'last.brier', 'roc', 'auc'
+                         , 'uno.c', 'uno.auc', 'iauc.uno'
+                         , 'Sens_t', 'Spec_t', 'PPV_t', 'NPV_t', 'F1_t'
+                         , 'binary_cutpoint', 'survival_prob_testset_t'
+                         , 'last.sens', 'last.spec', 'last.ppv', 'last.npv'
+                         , 'last.f1', 'last.mcc'
+  )
   return(performance)
 }
 
@@ -380,7 +532,7 @@ eval_performance4 = function(prob.risk.test.set, test.data, trained.data, eval.t
   
   
   # save:
-  saving.dir = loading.dir
+  #saving.dir = loading.dir
   performance = list(prob.risk, cind.obj, pec.obj, last.cindex, last.brier, roc, auc, uno_c, uno_auc
                      , iauc_uno
                      , Sens, Spec, PPV, NPV, F1, MCC, roc_with_F1

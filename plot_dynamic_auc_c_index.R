@@ -100,26 +100,26 @@ cForest_tsfresh_expanded_var_df_2 <- auc_df_from_performance_testset('cForest_ex
 
 dynamic_deephit_tuned_expanded_var_df_2 <- auc_df_from_performance_testset('dynamic_deephit_expanded_var_y15_2_2')
 
-cox_traj_expand_var_df <- auc_df_from_performance_testset('cox_expanded_var_traj_plus_data_y15')
-rsf_traj_expand_var_df <- auc_df_from_performance_testset('rsf_expanded_var_traj_plus_data_y15')
-lasso_traj_expand_var_df <- auc_df_from_performance_testset('lasso_expanded_var_traj_plus_data_y15')
-cForest_traj_expand_var_df <- auc_df_from_performance_testset('cForest_expanded_var_traj_plus_data_y15')
+# cox_traj_expand_var_df <- auc_df_from_performance_testset('cox_expanded_var_traj_plus_data_y15')
+# rsf_traj_expand_var_df <- auc_df_from_performance_testset('rsf_expanded_var_traj_plus_data_y15')
+# lasso_traj_expand_var_df <- auc_df_from_performance_testset('lasso_expanded_var_traj_plus_data_y15')
+# cForest_traj_expand_var_df <- auc_df_from_performance_testset('cForest_expanded_var_traj_plus_data_y15')
 
-rsf_traj_expand_var_df_gap <- auc_df_from_performance_testset('rsf_expanded_var_traj_plus_data_y15_gap')
-rsf_traj_expand_var_df_gap_3 <- auc_df_from_performance_testset('rsf_expanded_var_traj_plus_data_y15_gap_3')
-rsf_traj_expand_var_df_gap_2 <- auc_df_from_performance_testset('rsf_expanded_var_traj_plus_data_y15_gap_2')
-
-rsf_traj_only_expand_var_df_gap <- auc_df_from_performance_testset('rsf_expanded_var_traj_only_gap')
-rsf_traj_trcovw_df <- auc_df_from_performance_testset('rsf_expanded_var_traj_only_trcovw_4')
-cox_traj_trcovw_df <- auc_df_from_performance_testset('cox_expanded_var_traj_only_trcovw_4')
-
-rsf_traj_trcovw_plus_y15_data_df_4 <- auc_df_from_performance_testset('rsf_expanded_var_traj_trcovw_plus_some_y15_data_4')
-rsf_traj_trcovw_plus_y15_data_df_5 <- auc_df_from_performance_testset('rsf_expanded_var_traj_trcovw_plus_some_y15_data_5')
-rsf_traj_trcovw_plus_y15_data_df_6 <- auc_df_from_performance_testset('rsf_expanded_var_traj_trcovw_plus_some_y15_data_6')
-
+# rsf_traj_expand_var_df_gap <- auc_df_from_performance_testset('rsf_expanded_var_traj_plus_data_y15_gap')
+# rsf_traj_expand_var_df_gap_3 <- auc_df_from_performance_testset('rsf_expanded_var_traj_plus_data_y15_gap_3')
+# rsf_traj_expand_var_df_gap_2 <- auc_df_from_performance_testset('rsf_expanded_var_traj_plus_data_y15_gap_2')
+# 
+# rsf_traj_only_expand_var_df_gap <- auc_df_from_performance_testset('rsf_expanded_var_traj_only_gap')
+# rsf_traj_trcovw_df <- auc_df_from_performance_testset('rsf_expanded_var_traj_only_trcovw_4')
+# cox_traj_trcovw_df <- auc_df_from_performance_testset('cox_expanded_var_traj_only_trcovw_4')
+# 
+# rsf_traj_trcovw_plus_y15_data_df_4 <- auc_df_from_performance_testset('rsf_expanded_var_traj_trcovw_plus_some_y15_data_4')
+# rsf_traj_trcovw_plus_y15_data_df_5 <- auc_df_from_performance_testset('rsf_expanded_var_traj_trcovw_plus_some_y15_data_5')
+# rsf_traj_trcovw_plus_y15_data_df_6 <- auc_df_from_performance_testset('rsf_expanded_var_traj_trcovw_plus_some_y15_data_6')
+# 
 # rsf_traj_cont_n_binary_var_only_trcovw <- auc_df_from_performance_testset('rsf_expanded_var_traj_cont_n_binary_var_only_trcovw')
-# rsf_traj_cont_n_binary_var_only_trcovw_3 <- auc_df_from_performance_testset('rsf_expanded_var_traj_cont_n_binary_var_only_trcovw_3')
-# rsf_traj_cont_n_binary_var_only_trcovw_4 <- auc_df_from_performance_testset('rsf_expanded_var_traj_cont_n_binary_var_only_trcovw_4')
+# # rsf_traj_cont_n_binary_var_only_trcovw_3 <- auc_df_from_performance_testset('rsf_expanded_var_traj_cont_n_binary_var_only_trcovw_3')
+# # rsf_traj_cont_n_binary_var_only_trcovw_4 <- auc_df_from_performance_testset('rsf_expanded_var_traj_cont_n_binary_var_only_trcovw_4')
 # rsf_traj_cont_n_binary_var_only_trcovw_5 <- auc_df_from_performance_testset('rsf_expanded_var_traj_cont_n_binary_var_only_trcovw_5')
 rsf_traj_cont_n_binary_var_only_trcovw_6 <- auc_df_from_performance_testset('rsf_expanded_var_traj_cont_n_binary_var_only_trcovw_6')
 
@@ -137,7 +137,7 @@ cox_y0_expand_var_df_2 <- auc_df_from_performance_testset('cox_expanded_var_base
 
 rsf_concat_expand_var_df <- auc_df_from_performance_testset('rsf_expanded_var_concat')
 # rsf_concat_expand_var_df_ntree_100 <- auc_df_from_performance_testset('rsf_expanded_var_concat_ntree_100')
-
+jmbayes2_expanded_var_df <- auc_df_from_performance_testset('jmbayes2_expanded_var_macbook') 
 
 
 # ### ASCVD risk score:  ######
@@ -178,7 +178,7 @@ df_for_plot = data.frame(eval_times
                      # , rsf_traj_trcovw_df$median 
                      
                      # , rsf_traj_trcovw_plus_y15_data_df_6$median
-                     #, rsf_traj_cont_n_binary_var_only_trcovw$median
+                    
                     , rsf_traj_cont_n_binary_var_only_trcovw_6$median
                     
                       #, rsf_traj_only_expand_var_df_gap$median
@@ -203,6 +203,8 @@ df_for_plot = data.frame(eval_times
                         ,rsf_y15_expand_var_df_2_1$median  
                         ,cox_y15_expand_var_df_2$median
                         
+                        ,jmbayes2_expanded_var_df$median
+                    
                         , cox_y0_expand_var_df_2$median 
                         
                         #,cox_y15_auc_df$mean
@@ -351,10 +353,11 @@ df_for_plot = data.frame(eval_times
                          
                          , rsf_concat_expand_var_df$mean
                          
-                         , rsf_traj_cont_n_binary_var_only_trcovw$mean
+                         , rsf_traj_cont_n_binary_var_only_trcovw_6$mean
                           ,rsf_y15_expand_var_df_2_1$mean  
                          ,cox_y15_expand_var_df_2$mean
                          
+                         , jmbayes2_expanded_var_df$mean
                          , cox_y0_expand_var_df_2$mean 
                          
                        
@@ -447,7 +450,7 @@ auc.plot +
   # geom_smooth(aes( time, quant, color = Model, group = Model), size = 1.3, se = FALSE, method = lm, formula = y ~ splines::bs(x, 1))+
   scale_color_manual(values = color_scheme[1:(ncol(df_for_plot)-1)]) +
   xlab("Years After Exam 6 (Exam Y15)") +
-  ylab("mean AUC") +
+  ylab("Mean AUC") +
   scale_x_continuous(breaks=seq(5,17,2))+
   ylim(0.68, 0.90) + 
   theme_minimal() + 
