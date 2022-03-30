@@ -5,7 +5,7 @@
 
 # set working directory: 
 work_dir = 'U:/Hieu/CARDIA_longi_project'
-work_dir = '/Volumes/MR-Research$/Hieu/CARDIA_longi_project'
+# work_dir = '/Volumes/MR-Research$/Hieu/CARDIA_longi_project'
 
 setwd(work_dir)
 
