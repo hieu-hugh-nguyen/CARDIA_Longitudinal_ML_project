@@ -136,27 +136,30 @@ St <- surv.object$surv[pos]
 
 #eval_times_for_iauc =seq(6,11,1)
 
-#eval_times_for_iauc =seq(3,10,1)
+# eval_times_for_iauc =seq(3,10,1)
 eval_times_for_iauc =seq(5,endpt,1)
-#eval_times_for_iauc =seq(10,endpt,1)
+# eval_times_for_iauc =seq(10,endpt,1)
 
 
 
 model_list = c(
   ## model_name = 
-  'rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15_black_only'
-  ,'rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15_white_only'
-
-  ,'rsf_expanded_var_traj_cont_n_binary_var_only_trcovw_black_only'
-  ,'rsf_expanded_var_traj_cont_n_binary_var_only_trcovw_white_only'
+  # 'rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15_black_only'
+  # ,'rsf_expanded_var_and_ascvd_var_tsfeatures_plus_data_y15_white_only'
+  # 
+  # ,'rsf_expanded_var_traj_cont_n_binary_var_only_trcovw_black_only'
+  # ,'rsf_expanded_var_traj_cont_n_binary_var_only_trcovw_white_only'
+  'rsf_expanded_var_traj_cont_n_binary_var_only_trcovw_2_black_only'
+  ,'rsf_expanded_var_traj_cont_n_binary_var_only_trcovw_2_white_only'
   
-
-  , 'rsf_expanded_var_concat_black_only'
-  , 'rsf_expanded_var_concat_white_only'
-  
-
-  , 'rsf_expanded_var_black_only'
-  , 'rsf_expanded_var_white_only'  
+    # 
+  # 
+  # , 'rsf_expanded_var_concat_black_only'
+  # , 'rsf_expanded_var_concat_white_only'
+  # 
+  # 
+  # , 'rsf_expanded_var_black_only'
+  # , 'rsf_expanded_var_white_only'  
   
   
 )

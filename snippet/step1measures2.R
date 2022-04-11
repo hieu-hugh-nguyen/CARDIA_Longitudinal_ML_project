@@ -534,7 +534,7 @@ step3clusters2 <-
     
     # Calculate the number of clusters to use
     if(is.null(nclusters)){
-      cluster.est = NbClust(data, method = "kmeans", index = criteria, max.nc = max_no_clust)
+      cluster.est = NbClust::NbClust(data, method = "kmeans", index = criteria, max.nc = max_no_clust)
       
       all.criteria = as.data.frame(cluster.est$All.index)
       all.criteria.x = as.integer(rownames(all.criteria))
