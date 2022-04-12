@@ -64,7 +64,7 @@ plot_lowess_cont_var <- function(var){
     theme_minimal()+
     theme(#axis.text=element_text(size=13),
          axis.title=element_blank()
-         ,plot.title = element_text(size=8,hjust = 0.5)
+         ,plot.title = element_text(size=7,hjust = 0.5)
   #       # legend.title = element_text(color = "black", size = 17),
   #       # legend.text = element_text(color = "black", size = 17))
          )
@@ -84,27 +84,38 @@ plot_lowess_cat_var <- function(var){
   n_clusters <- length(unique(marginal_object_factor[[var]]))
  
   
-  plot_final <- ggplot(marginal_object_factor, aes(get(var), yhat)) + 
-    geom_boxplot(outlier.shape = NA) +
+  plot_final <- ggplot(marginal_object_factor, aes(get(var), yhat, fill = get(var), color = get(var))) + 
+    geom_boxplot(outlier.shape = NA, alpha = 0.5) +
+ #   scale_fill_hue(l=40, c=35) +
     geom_rug(sides="b") + 
     coord_cartesian(ylim = c(0.85, 1)) +
     labs(y = '', x = '', title = var) +
     theme_minimal() +
     theme(axis.title=element_blank()
-          ,plot.title = element_text(size=8,hjust = 0.5))
+          ,plot.title = element_text(size=7,hjust = 0.5)
+          ,legend.position="none")
           
   `%notin%` <- Negate(`%in%`)
-  if (var %notin%  c('RACEBLACK', 'MALE')){
+#  if (var %notin%  c('RACEBLACK', 'MALE')){
     if (n_clusters >= 4){
-      cluster_ordered_colors = c('blk', 'red', 'blu', 'grn')
+#      cluster_ordered_colors = c('blk', 'red', 'blu', 'grn')
+      cluster_ordered_colors = c('black', 'red', 'blue', 'green')
       
       plot_final <- plot_final +
-        scale_x_discrete(labels = cluster_ordered_colors[1:n_clusters])
+  #      scale_x_discrete(labels = cluster_ordered_colors[1:n_clusters]) +
+        scale_fill_manual(values = cluster_ordered_colors[1:n_clusters]) +
+        scale_color_manual(values = cluster_ordered_colors[1:n_clusters])
+      
+      
     }else{
     plot_final <- plot_final +
-      scale_x_discrete(labels = cluster_ordered_colors[1:n_clusters])     
+  #    scale_x_discrete(labels = cluster_ordered_colors[1:n_clusters]) +
+      scale_fill_manual(values = cluster_ordered_colors[1:n_clusters]) +
+      scale_color_manual(values = cluster_ordered_colors[1:n_clusters])
+    
+    
     }
-}
+#}
   return(plot_final)
 }
 
@@ -131,6 +142,6 @@ for (var_idx in 2:length(var_order)){
 
 lowess_plot_all_obj 
 
-ggsave(filename = 'partial_dependence_plot.tif', path = paste0(work_dir, '/figures')
-       , units = 'in', width = 7.5, height = 7
+ggsave(filename = 'partial_dependence_plot_shorter.tif', path = paste0(work_dir, '/figures')
+       , units = 'in', width = 7.5, height = 6#7
        , device = 'tiff', dpi = 600)
