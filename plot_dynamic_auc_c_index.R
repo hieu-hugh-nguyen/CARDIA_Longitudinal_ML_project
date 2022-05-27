@@ -203,7 +203,7 @@ df_for_plot = data.frame(eval_times
                         ,rsf_y15_expand_var_df_2_1$median  
                         ,cox_y15_expand_var_df_2$median
                         
-                        ,jmbayes2_expanded_var_df$median
+                       # ,jmbayes2_expanded_var_df$median
                     
                         , cox_y0_expand_var_df_2$median 
                         
@@ -236,7 +236,7 @@ df_for_plot = data.frame(eval_times
 
 
 names(df_for_plot) = c('eval_times'
-                        ,'RSF on longitudinal derived features' # \n of 35 variables' #'and Static Y15 Data'     
+                        ,'RSF on time series extracted features' # \n of 35 variables' #'and Static Y15 Data'     
                        #, 'cForest'
                        , 'Dynamic-Deephit'
                        , 'RSF on concatenated data'
@@ -292,7 +292,7 @@ auc.plot +
   
   # geom_smooth(aes( time, quant, color = Model, group = Model), size = 1.3, se = FALSE, method = lm, formula = y ~ splines::bs(x, 1))+
   scale_color_manual(values = color_scheme[1:(ncol(df_for_plot)-1)]) +
-  xlab("Years After Exam 6 (Exam Year 15)") +
+  xlab("Years After Y15") +
   ylab("Median AUC") +
   scale_x_continuous(breaks=seq(5,17,2))+
   ylim(0.68, 0.90) + 
@@ -314,7 +314,7 @@ auc.plot +
   
   # geom_smooth(aes( time, quant, color = Model, group = Model), size = 1.3, se = FALSE, method = lm, formula = y ~ splines::bs(x, 1))+
   scale_color_manual(values = color_scheme[1:(ncol(df_for_plot)-1)]) +
-  xlab("Years After Exam 6 (Exam Y15)") +
+  xlab("Years After Y15") +
   ylab("Median AUC") +
   scale_x_continuous(breaks=seq(5,17,2))+
   ylim(0.68, 0.90) + 

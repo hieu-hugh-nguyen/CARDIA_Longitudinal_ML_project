@@ -20,9 +20,9 @@ parallel::detectCores()
 parallelMap::parallelStartSocket(5)
 
 # source snippet functions:
-source_dir <- 'U:/Hieu/CARDIA_project/CARDIA_project'
-source(paste0(source_dir,'/Git/code/snippet/createDir.R'))
-source(paste0(source_dir,'/Git/code/snippet/subsetDataTopnVar.R'))
+source_dir <- 'U:/Hieu/CARDIA_longi_project'
+source(paste0(source_dir,'/code/git_code/snippet/createDir.R'))
+source(paste0(source_dir,'/code/git_code/snippet/subsetDataTopnVar.R'))
 
 # load var dicts:
 exam_years <- c(0, 2, 5, 7, 10, 15, 20, 25, 30)
