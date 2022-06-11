@@ -310,7 +310,8 @@ table_1_output_Y0 <- table1(~. | cohort_inclusion_status, data= table_1_data_Y0_
                               , "PSTYR" 
                               , "mort_status", "status", "cohort_inclusion_status"))
        , overall="Exam Y0 (all subjects)"
-       , render.continuous=my.render.cont, render.categorical=my.render.cat, render.missing=NULL
+       #, render.continuous=my.render.cont
+       , render.categorical=my.render.cat, render.missing=NULL
        , topclass="Rtable1-grid"
       )
 table_1_output_Y0
@@ -346,7 +347,8 @@ table_1_y15 <- table1(~., data=table_1_data_Y15_recoded %>%
                                          , "PSTYR" 
                                          , "mort_status", "status"))
                   , overall="Exam Y15"
-                  , render.continuous=my.render.cont, render.categorical=my.render.cat, render.missing=NULL
+                  #, render.continuous=my.render.cont
+                  , render.categorical=my.render.cat, render.missing=NULL
                   , topclass="Rtable1-grid"
 )
 table_1_y15

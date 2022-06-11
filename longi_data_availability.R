@@ -17,7 +17,7 @@ if(length(new.packages)) install.packages(new.packages)
 lapply(list.of.packages, require, character.only = T)
 
 parallel::detectCores()
-parallelMap::parallelStartSocket(5)
+# parallelMap::parallelStartSocket(5)
 
 # source snippet functions:
 source_dir <- 'U:/Hieu/CARDIA_longi_project'
@@ -58,7 +58,7 @@ longi_data <- longi_data %>% mutate(varname_longi = ifelse(grepl('_',substr(long
 
 
 saving.dir = file.path(work_dir,'csv_files')
-# write.csv(longi_data, file = paste0(saving.dir,'/longi_data_avalability_dictionary.csv'), row.names = F)
+# # write.csv(longi_data, file = paste0(saving.dir,'/longi_data_avalability_dictionary.csv'), row.names = F)
 
 
 # remove questionnaire variables, retain lab-based and reading center variables:
@@ -85,7 +85,7 @@ img_datadoc <- c('c1echo','c1cartda'
 
 
 bp_datadoc <- c('a4f02','b2f02','c1f02','d1f02','e1f02','f1f02','e1f02','g3f02','h3f02v2','i1f02')
-anthro_datadoc <-c ('a4f20','b2f20','c1f20','d1f20a','e1f20','f2f20','g3f20','h3f20') #anthropometry
+anthro_datadoc <-c ('a4f20','b2f20','c1f20','d1f20a','e1f20','f2f20','g3f20','h3f20', 'i1f20') #anthropometry
 medical_his_datadoc <- c('a4f08','a4f09med','b2f08','b2f09mhb','c1f08','d1f08a','e1f08','f1f08','g3f08','h3f08','i1f08')
 smoking_datadoc <- c('a4f09tob','b2f09tob','c1f09tob','d1f9toba','e1f09tob','f1f09tob','g3f09tob','h3f09tob','i1f09tob')
 race_age_edu_datadoc <- c('a4f01') # c('b3ref')
@@ -112,7 +112,7 @@ longi_useful_data <- longi_data %>% filter(Datadoc %in% c(race_age_edu_datadoc, 
 
 
 saving.dir = file.path(work_dir,'csv_files')
-write.csv(longi_useful_data, file = paste0(saving.dir,'/longi_data_avalability_dictionary_no_questionnaire2.csv'), row.names = F)
+# write.csv(longi_useful_data, file = paste0(saving.dir,'/longi_data_avalability_dictionary_no_questionnaire2.csv'), row.names = F)
 
 
 
@@ -131,7 +131,7 @@ longi_ascvd_var_dict <- longi_useful_data %>% filter(varname_longi %in% c('RACE1
 
 
 saving.dir = file.path(work_dir,'csv_files')
-write.csv(longi_ascvd_var_dict, file = paste0(saving.dir,'/longi_data_avalability_dictionary_ascvd_risk_factors2.csv'), row.names = F)
+# write.csv(longi_ascvd_var_dict, file = paste0(saving.dir,'/longi_data_avalability_dictionary_ascvd_risk_factors2.csv'), row.names = F)
 
 
 #A09MDNOW
