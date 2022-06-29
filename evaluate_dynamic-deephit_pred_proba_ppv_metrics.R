@@ -83,7 +83,7 @@ testingid_all <- read.csv(paste0(work_dir,'/csv_files/all_testing_set_ID.csv'))
 
 seed <- 4495
 set.seed(seed)
-nfolds <- 10
+nfolds <- 100
 
 endpt <- 17; # after Year 15
 eval_times <- seq(1, endpt, by = 1)

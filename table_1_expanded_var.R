@@ -371,7 +371,4 @@ write.excel <- function(x,row.names=FALSE,col.names=TRUE,...) {
 
 write.excel(table_1_combined)
 
-#' #'C08DIAB' 'HBP05'
-#' var = 'C08KIDNY'
-#' table(data_y10[[var]])
 
