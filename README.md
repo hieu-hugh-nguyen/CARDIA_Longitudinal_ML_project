@@ -144,10 +144,10 @@ plot_VIMP_RSF_race_specific.R
 plot_traj_cluster_race_specific.R    
 
 
-#### Dynamic-DeepHit for all subjects     
+#### Dynamic-DeepHit for all subjects:     
 CARDIA_longi_dynamic_deephit_expanded_var-all_subjects.R  
 
-#### Experiment with different clustering criteria  
+#### Experiment with different clustering criteria:  
 running_traj_models_expanded_var_aic_bic.R  
 running_traj_models_expanded_var_exp_with_n_clusters.R  
 plot_traj_clusters.R  
