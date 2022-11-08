@@ -1,0 +1,24 @@
+***A description of exclusions  and created (derived) variables***
+
+
+
+
+**Cohort filtering (inclusion-exclusion) flowchart:**
+Please see Fig. S2 in the Supplementary Materials of the mansucript for more details
+All steps were performed in 'longi_data_assemble.R' file
+Start with all 5114 distinct subjects 
+--> excluding those with events or censored prior to Y15 Exam: 3639 left
+--> excluding those with at least one missing data in Y0 or Y15 Exam: 3551 left 
+--> excluding those with self-reported CVD events (e.g., heart attack) before Y15: 3539 left
+
+
+
+**Variables inclusion and creation:**
+All variables included in this analysis were handpicked.
+For the list of variables used, please see Table S1 of the Supplementary Materials
+For the list of variables with their corresponding coding, please refer to the variable dictionaries in /code_and_files/csv_files
+
+Deriving new variables:
+The variable 'Parent history of heart attack' (PATCK) is a binary variable and a combined version of 'Has mother ever had heart attack' (MATCK) and 'Has father ever had heart attack' (FATCK). The coding is included in 'longi_data_assemble.R' file. Below is the pseudo-code:
+IF (MATCK = 1 OR PATCK = 1): PATCK = 1 
+ELSE PATCK = 0
