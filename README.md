@@ -1,7 +1,14 @@
-** A text file that lists and describes all files enclosed.**
-** Also describes the entire project workflow from the first step (extracting the survival outcome and the features from each exam), through every step of analysis, to the last step (plotting manuscript figures) **
+# High-Dimensional Multivariate Longitudinal Data for Survival Analysis of Cardiovascular Event Prediction in Young Adults: Insights from a Comparative Explainable Study
 
-MAIN MANUSCRIPT: 
+This repository is the code base for the following paper:  
+Nguyen, H.T., Vasconcellos, H.D., Keck, K., Reis, J.P., Lewis, C.E., Sidney, S., Lloyd-Jones, D.M., Schreiner, P.J., Guallar, E., Wu, C.O. and Lima, J.A., 2022. High-Dimensional Multivariate Longitudinal Data for Survival Analysis of Cardiovascular Event Prediction in Young Adults: Insights from a Comparative Explainable Study.
+
+
+## Request Data: https://www.cardia.dopm.uab.edu/ 
+
+##  WORKFLOW CODE:
+
+### MAIN MANUSCRIPT: 
 
 Start: 
 extract_outcome_space.R
@@ -27,7 +34,7 @@ output files: "longi_data_avalability_dictionary_ascvd_risk_factors2.csv"
 
 
 
-### Analysis using only traditional (ASCVD) risk factors: ####################
+#### Analysis using only traditional (ASCVD) risk factors:
 
 --> longi_data_assemble_ascvd_var.R
 # Input: longitudinal data dictionary, plus the actual data feature space from each year, plus the time-to-event outcome data
@@ -39,13 +46,13 @@ output files: "data_longi_long_format_ascvd_risk_factors.csv", "data_longi_long_
 
 
 
---> table_1.R
-# Filter out cohort to get the final analysis cohort (flowchart in ppt presentation). Make table 1 for everyone in Y0 Exam, final analysis analysis cohort in Y0 and Y15 Exam
-# Additional output: 'subjects_in_final_analysis_cohort.csv' (3551 subjects with filtering criteria in the flowchart)
+--> table_1.R  
+Filter out cohort to get the final analysis cohort (flowchart in ppt presentation). Make table 1 for everyone in Y0 Exam, final analysis analysis cohort in Y0 and Y15 Exam  
+Additional output: 'subjects_in_final_analysis_cohort.csv' (3551 subjects with filtering criteria in the flowchart)
 
 
---> data_split.R
-# split data into stratified cross-validation folds
+--> data_split.R  
+split data into stratified cross-validation folds
 
 --> Model training and evaluation:
 running_joint_models_y15_ascvd_var.R
@@ -64,18 +71,18 @@ and calculate_integratedAUC_ascvd_var.R
 
 
 
-### Extending analysis to more covariates: ####################
+#### Extending analysis to more covariates:
 
 --> longi_data_dictionary_filter.R
-# Input: longitudinal data dictionary, plus the actual data feature space from each year
+Input: longitudinal data dictionary, plus the actual data feature space from each year
 input files: "longi_data_avalability_dictionary_no_questionnaire2.csv", exam_year"_unimputed_featurespace.csv"
-# Output: longitudinal data sheet, in long format, for all variables in the input data dictionary
-# also output: "longi_data_availability_dictionary_filtered.csv"
+Output: longitudinal data sheet, in long format, for all variables in the input data dictionary
+also output: "longi_data_availability_dictionary_filtered.csv"
 
 --> bubble_chart_all_vars.R
-# visualize/organize longi data availability in bubble chart format
-# input: 'longi_data_avalability_dictionary_filtered.csv'
-# output: 'longi_data_avalability_dup_rm_bubble_format2.csv' -- lots of variables but with no variable description or variable group
+visualize/organize longi data availability in bubble chart format
+input: 'longi_data_avalability_dictionary_filtered.csv'
+output: 'longi_data_avalability_dup_rm_bubble_format2.csv' -- lots of variables but with no variable description or variable group
 
 Manually go through the var dict and decide which variables to include
 longi_data_avalability_dup_rm_bubble_format3_corrected.xlsx
@@ -83,8 +90,8 @@ longi_data_avalability_dup_rm_bubble_format3_corrected.xlsx
 
 --> longi_data_assemble.R
 create a combined dictionary, assemble data
-# Input: longitudinal data dictionary, dictonary in bubble format, and the actual data feature space from each year
-# Output: longitudinal data sheet, in long format, for all variables in the input data dictionary
+Input: longitudinal data dictionary, dictonary in bubble format, and the actual data feature space from each year
+Output: longitudinal data sheet, in long format, for all variables in the input data dictionary
 
 --> table_1_expanded_var.R 
 Create Table 1 of the manuscript
@@ -139,10 +146,10 @@ plot_VIMP_RSF_race_specific.R
 plot_traj_cluster_race_specific.R
 
 
-#### Dynamic-DeepHit for all subjects #### 
+#### Dynamic-DeepHit for all subjects   
 CARDIA_longi_dynamic_deephit_expanded_var-all_subjects.R
 
-#### Experiment with different clustering criteria ####
+#### Experiment with different clustering criteria  
 running_traj_models_expanded_var_aic_bic.R
 running_traj_models_expanded_var_exp_with_n_clusters.R
 plot_traj_clusters.R
@@ -150,4 +157,3 @@ plot_traj_clusters.R
 --------------------------------------------------------------------------------------
 Miscellanea: 
 The '/snippet' folder: contains helper functions for the excecution of the above code files in the main folder 
-The '/csv_files' folder: contains the variable dictionaries that entail all excluded and included variables
