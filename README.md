@@ -12,22 +12,22 @@ Nguyen, H.T., Vasconcellos, H.D., Keck, K., Reis, J.P., Lewis, C.E., Sidney, S.,
 
 Start: 
 extract_outcome_space.R
-# extracting outcome
-# input: Mortality and Morbidity data up to 2020 in SAS format 
-# output: cvd outcome and mortality time-to-event in csv format
+extracting outcome
+input: Mortality and Morbidity data up to 2020 in SAS format 
+output: cvd outcome and mortality time-to-event in csv format
 "cvd_outcome_up_to_2020.csv"
 
 -->  year_datacompile.R
-# data assemble
-# input: exam data files in SAS format
-# output: single exam dictionary and unimputed feature space
+data assemble
+input: exam data files in SAS format
+output: single exam dictionary and unimputed feature space
 output files: exam_year, "_unimputed_featurespace.csv", exam_year, "_all_vars_dictionary.csv"
 
 --> longi_data_availability.R
-# combine, unite, and arrange them to make a dictionary of longitudinal variables 
-# input: variable dictionary from each year
-# output: longitudinal variable dictionaries: one for all variables,
-# one for all non-questionnaire variables, and one for ascvd risk factors
+combine, unite, and arrange them to make a dictionary of longitudinal variables 
+input: variable dictionary from each year
+output: longitudinal variable dictionaries: one for all variables,
+one for all non-questionnaire variables, and one for ascvd risk factors
 output files: "longi_data_avalability_dictionary_ascvd_risk_factors2.csv"
 "longi_data_avalability_dictionary_no_questionnaire2.csv"
 
@@ -37,12 +37,12 @@ output files: "longi_data_avalability_dictionary_ascvd_risk_factors2.csv"
 #### Analysis using only traditional (ASCVD) risk factors:
 
 --> longi_data_assemble_ascvd_var.R
-# Input: longitudinal data dictionary, plus the actual data feature space from each year, plus the time-to-event outcome data
+Input: longitudinal data dictionary, plus the actual data feature space from each year, plus the time-to-event outcome data
 input files: "longi_data_avalability_dictionary_ascvd_risk_factors2.csv", exam_year"_unimputed_featurespace.csv"
-# Output: longitudinal data sheet, in long format, for all variables in the input data dictionary
+Output: longitudinal data sheet, in long format, for all variables in the input data dictionary
 output files: "data_longi_long_format_ascvd_risk_factors.csv", "data_longi_long_format_ascvd_risk_factors_removed_missing_data.csv"
 "data_longi_long_format_ascvd_risk_factors_with_missing_data.csv"
-# cohort selection: 3639 participants (including missing data)
+cohort selection: 3639 participants (including missing data)
 
 
 
@@ -63,7 +63,7 @@ prep_data_for_dynamic_deephit.R --> CARDIA_longi_dynamic_deephit.ipynb
 
 --> get_aggregated_results.R
 and calculate_integratedAUC_ascvd_var.R
-# Get performance results in tabulated format
+Get performance results in tabulated format
 
 --> plot_dynamic_auc_c_index.R   
 
