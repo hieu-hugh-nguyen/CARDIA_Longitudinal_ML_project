@@ -152,5 +152,6 @@ running_traj_models_expanded_var_aic_bic.R
 running_traj_models_expanded_var_exp_with_n_clusters.R  
 plot_traj_clusters.R  
 
-Miscellanea: 
-The '/snippet' folder: contains helper functions for the excecution of the above code files in the main folder 
+Miscellanea:   
+The '/snippet' folder: contains helper functions for the excecution of the above code files in the main folder   
+The '/csv_files' folder: contains the variable dictionaries that entail all excluded and included variables
