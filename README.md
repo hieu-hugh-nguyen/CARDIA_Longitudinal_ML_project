@@ -52,10 +52,11 @@ Additional output: 'subjects_in_final_analysis_cohort.csv' (3551 subjects with f
 split data into stratified cross-validation folds  
 
 --> Model training and evaluation:  
-running_joint_models_y15_ascvd_var.R  
-running_y15_models_ascvd_var.R  
-tsfresh_ascvd_var.ipynb --> running_time_series_extracted_features_ascvd_var_removed_correlation_other_algorithms.R  
-prep_data_for_dynamic_deephit.R --> CARDIA_longi_dynamic_deephit.ipynb  
+Four different approaches to handle longitudinal are implemented:  
+1/ running_joint_models_y15_ascvd_var.R  
+2/ running_y15_models_ascvd_var.R  
+3/ tsfresh_ascvd_var.ipynb --> running_time_series_extracted_features_ascvd_var_removed_correlation_other_algorithms.R  
+4/ prep_data_for_dynamic_deephit.R --> CARDIA_longi_dynamic_deephit.ipynb  
   
   
 --> get_aggregated_results.R  
@@ -98,6 +99,7 @@ Split data into training, validation, and testing sets for each fold of 5-times-
 
 
 --> Model training and evaluation:  
+Seven different approaches to handle longitudinal are implemented:    
 1/running_y15_models_expanded_var.R  
 2/running_baseline_models_expanded_var.R  
 3/prep_data_for_dynamic_deephit.R --> CARDIA_longi_dynamic_deephit_expanded_var.ipynb --> evaluate_dynamic-deephit_pred_proba_expanded_var.R  
