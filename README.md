@@ -8,9 +8,9 @@ Nguyen, H.T., Vasconcellos, H.D., Keck, K., Reis, J.P., Lewis, C.E., Sidney, S.,
 
 ##  WORKFLOW CODE:
 
-### MAIN MANUSCRIPT: 
+### Main manuscript: 
 
-Start: 
+Start:   
 extract_outcome_space.R  
 extracting outcome  
 input: Mortality and Morbidity data up to 2020 in SAS format   
@@ -119,7 +119,8 @@ Fig 4 - shap_rsf_traj_model.ipynb, shap_rsf_tsfresh_model.ipynb
 Fig 5 - TIME_rsf-tsfresh_expanded_var_include_demo_var_effect_size_0_1.ipynb  
 
 --------------------------------------------------------------------------------------
-### Supplementary Materials:  
+### Supplementary Materials:    
+
 #### Race-specific analysis:   
 --> data_split_expanded_var_race_specific.R  
 Split data into training, validation, and testing sets for each fold of 10-fold cross-validation  
