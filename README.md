@@ -1,7 +1,8 @@
 # High-Dimensional Multivariate Longitudinal Data for Survival Analysis of Cardiovascular Event Prediction in Young Adults: Insights from a Comparative Explainable Study
 
 This repository is the code base for the following paper:  
-Nguyen, H.T., Vasconcellos, H.D., Keck, K., Reis, J.P., Lewis, C.E., Sidney, S., Lloyd-Jones, D.M., Schreiner, P.J., Guallar, E., Wu, C.O. and Lima, J.A., 2022. High-Dimensional Multivariate Longitudinal Data for Survival Analysis of Cardiovascular Event Prediction in Young Adults: Insights from a Comparative Explainable Study.
+Nguyen, H.T., Vasconcellos, H.D., Keck, K., Reis, J.P., Lewis, C.E., Sidney, S., Lloyd-Jones, D.M., Schreiner, P.J., Guallar, E., Wu, C.O. and Lima, J.A., 2022. High-Dimensional Multivariate Longitudinal Data for Survival Analysis of Cardiovascular Event Prediction in Young Adults: Insights from a Comparative Explainable Study.  
+https://doi.org/10.21203/rs.3.rs-2082433/v1 
 
 
 ### Request Data: https://www.cardia.dopm.uab.edu/ 
