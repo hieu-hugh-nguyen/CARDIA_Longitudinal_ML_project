@@ -6,7 +6,7 @@ Nguyen, H.T., Vasconcellos, H.D., Keck, K., Reis, J.P., Lewis, C.E., Sidney, S.,
 https://doi.org/10.1186/s12874-023-01845-4 
 
 
-### Request Data: https://www.cardia.dopm.uab.edu/ 
+Request Data: https://www.cardia.dopm.uab.edu/ 
 
 ##  WORKFLOW CODE:
 ### Main manuscript: 
