@@ -1,6 +1,7 @@
 # High-Dimensional Multivariate Longitudinal Data for Survival Analysis of Cardiovascular Event Prediction in Young Adults: Insights from a Comparative Explainable Study
 
 This repository is the code base for the following paper:  
+
 Nguyen, H.T., Vasconcellos, H.D., Keck, K., Reis, J.P., Lewis, C.E., Sidney, S., Lloyd-Jones, D.M., Schreiner, P.J., Guallar, E., Wu, C.O. and Lima, J.A., 2023. Multivariate longitudinal data for survival analysis of cardiovascular event prediction in young adults: insights from a comparative explainable study. BMC medical research methodology, 23(1), p.23. 
 https://doi.org/10.1186/s12874-023-01845-4 
 
